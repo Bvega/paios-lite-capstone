@@ -1,0 +1,1 @@
+"""PAIOS-Lite package scaffold."""

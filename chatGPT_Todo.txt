@@ -1,0 +1,6 @@
+# PAIOS-Lite Capstone Todo
+
+- [ ] Confirm repository structure
+- [ ] Add placeholder docs and scaffold files
+- [ ] Run basic sanity checks
+- [ ] Commit initial scaffold
