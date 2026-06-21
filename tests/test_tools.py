@@ -12,6 +12,7 @@ import pytest
 
 from src.tools.context_reader import get_git_log, read_project_context
 from src.tools.note_searcher import search_notes
+from src.tools.plan_tools import create_plan, render_actions
 
 # Resolve project root relative to this test file
 _PROJECT_ROOT = str(Path(__file__).parent.parent.resolve())
@@ -228,3 +229,101 @@ def test_search_notes_unreadable_file_is_skipped(tmp_path, monkeypatch):
 
     assert isinstance(result, str)
     assert "No matches" in result
+
+
+# ── create_plan ──────────────────────────────────────────────────────────────
+
+
+def test_create_plan_two_lines_exact():
+    result = create_plan("Wire memory agent\nWrite tests")
+    assert result == "## Plan\n\nWire memory agent\nWrite tests\n\n2 line(s) of context.\n"
+
+
+def test_create_plan_one_line_exact():
+    result = create_plan("Single task")
+    assert result == "## Plan\n\nSingle task\n\n1 line(s) of context.\n"
+
+
+def test_create_plan_empty_exact():
+    result = create_plan("")
+    assert result == "## Plan\n\n(no context provided)\n"
+
+
+def test_create_plan_whitespace_only_exact():
+    result = create_plan("   \n\t  ")
+    assert result == "## Plan\n\n(no context provided)\n"
+
+
+def test_create_plan_preserves_internal_blank_line_exact():
+    result = create_plan("Task one\n\nTask two")
+    assert result == "## Plan\n\nTask one\n\nTask two\n\n2 line(s) of context.\n"
+
+
+def test_create_plan_ends_with_single_newline():
+    result = create_plan("a task")
+    assert result.endswith("\n")
+    assert not result.endswith("\n\n")
+
+
+# ── render_actions ───────────────────────────────────────────────────────────
+
+
+def test_render_actions_dash_markers_exact():
+    result = render_actions("- Run tests\n- Deploy app")
+    assert result == "## Next Actions\n\n  1. Run tests\n  2. Deploy app\n\n2 action(s).\n"
+
+
+def test_render_actions_asterisk_markers_exact():
+    result = render_actions("* Fix bug\n* Write docs")
+    assert result == "## Next Actions\n\n  1. Fix bug\n  2. Write docs\n\n2 action(s).\n"
+
+
+def test_render_actions_numeric_dot_markers_exact():
+    result = render_actions("1. Do this\n2. Do that")
+    assert result == "## Next Actions\n\n  1. Do this\n  2. Do that\n\n2 action(s).\n"
+
+
+def test_render_actions_numeric_paren_markers_exact():
+    result = render_actions("1) Do this\n2) Do that")
+    assert result == "## Next Actions\n\n  1. Do this\n  2. Do that\n\n2 action(s).\n"
+
+
+def test_render_actions_mixed_markers_exact():
+    result = render_actions("- Alpha\n* Beta\n1. Gamma")
+    assert result == "## Next Actions\n\n  1. Alpha\n  2. Beta\n  3. Gamma\n\n3 action(s).\n"
+
+
+def test_render_actions_plain_lines_exact():
+    result = render_actions("plain line with no marker")
+    assert result == "## Next Actions\n\n  1. plain line with no marker\n\n1 action(s).\n"
+
+
+def test_render_actions_ignores_blank_lines_exact():
+    result = render_actions("- first\n\n- second")
+    assert result == "## Next Actions\n\n  1. first\n  2. second\n\n2 action(s).\n"
+
+
+def test_render_actions_empty_exact():
+    result = render_actions("")
+    assert result == "## Next Actions\n\n(no actions generated)\n"
+
+
+def test_render_actions_whitespace_only_exact():
+    result = render_actions("   \n\t  ")
+    assert result == "## Next Actions\n\n(no actions generated)\n"
+
+
+def test_render_actions_preserves_internal_punctuation_exact():
+    result = render_actions("- Run: pytest --tb=short")
+    assert result == "## Next Actions\n\n  1. Run: pytest --tb=short\n\n1 action(s).\n"
+
+
+def test_render_actions_ends_with_single_newline():
+    result = render_actions("- an action")
+    assert result.endswith("\n")
+    assert not result.endswith("\n\n")
+
+
+def test_render_actions_tab_whitespace_after_marker_exact():
+    result = render_actions("-\tFirst action\n2)\tSecond action")
+    assert result == "## Next Actions\n\n  1. First action\n  2. Second action\n\n2 action(s).\n"
