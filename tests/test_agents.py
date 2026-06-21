@@ -321,3 +321,112 @@ def test_research_agent_module_exposes_no_runner_or_event_loop():
     assert not hasattr(ra, "Runner")
     assert not hasattr(ra, "InMemorySessionService")
     assert not hasattr(ra, "asyncio")
+
+
+# ---------------------------------------------------------------------------
+# Executor Agent — construction-only tests (no API key, no LLM call)
+# ---------------------------------------------------------------------------
+
+
+def test_executor_agent_build_agent_returns_llm_agent():
+    """build_agent() returns an ADK LlmAgent instance."""
+    from google.adk.agents import LlmAgent
+    with patch("src.agents.executor_agent.config.get_llm_model", return_value="ollama/llama3.2"):
+        from src.agents import executor_agent
+        agent = executor_agent.build_agent()
+    assert isinstance(agent, LlmAgent)
+
+
+def test_executor_agent_name():
+    """Agent name is exactly 'executor_agent'."""
+    with patch("src.agents.executor_agent.config.get_llm_model", return_value="ollama/llama3.2"):
+        from src.agents import executor_agent
+        agent = executor_agent.build_agent()
+    assert agent.name == "executor_agent"
+
+
+def test_executor_agent_output_key_is_next_actions():
+    """output_key is exactly 'next_actions'."""
+    with patch("src.agents.executor_agent.config.get_llm_model", return_value="ollama/llama3.2"):
+        from src.agents import executor_agent
+        agent = executor_agent.build_agent()
+    assert agent.output_key == "next_actions"
+
+
+def test_executor_agent_model_from_config():
+    """Agent model comes from the patched config.get_llm_model()."""
+    with patch("src.agents.executor_agent.config.get_llm_model", return_value="ollama/llama3.2"):
+        from src.agents import executor_agent
+        agent = executor_agent.build_agent()
+    assert agent.model == "ollama/llama3.2"
+
+
+def test_executor_agent_config_called_once_per_build():
+    """config.get_llm_model() is called exactly once per build_agent() call."""
+    mock_get_model = patch(
+        "src.agents.executor_agent.config.get_llm_model", return_value="ollama/llama3.2"
+    )
+    with mock_get_model as mock:
+        from src.agents import executor_agent
+        executor_agent.build_agent()
+    mock.assert_called_once()
+
+
+def test_executor_agent_exactly_one_tool():
+    """Exactly one tool is registered on the Executor Agent."""
+    with patch("src.agents.executor_agent.config.get_llm_model", return_value="ollama/llama3.2"):
+        from src.agents import executor_agent
+        agent = executor_agent.build_agent()
+    assert len(agent.tools) == 1
+
+
+def test_executor_agent_tool_is_render_actions():
+    """The registered tool is render_actions (wrapper-safe check)."""
+    from src.tools.plan_tools import render_actions
+    with patch("src.agents.executor_agent.config.get_llm_model", return_value="ollama/llama3.2"):
+        from src.agents import executor_agent
+        agent = executor_agent.build_agent()
+    tool = agent.tools[0]
+    tool_function = getattr(tool, "func", tool)
+    assert tool_function is render_actions
+
+
+def test_executor_agent_instruction_contains_plan_placeholder():
+    """Instruction contains the {plan} state placeholder."""
+    with patch("src.agents.executor_agent.config.get_llm_model", return_value="ollama/llama3.2"):
+        from src.agents import executor_agent
+        agent = executor_agent.build_agent()
+    assert "{plan}" in agent.instruction
+
+
+def test_executor_agent_instruction_contains_research_notes_placeholder():
+    """Instruction contains the {research_notes} state placeholder."""
+    with patch("src.agents.executor_agent.config.get_llm_model", return_value="ollama/llama3.2"):
+        from src.agents import executor_agent
+        agent = executor_agent.build_agent()
+    assert "{research_notes}" in agent.instruction
+
+
+def test_executor_agent_instruction_does_not_contain_memory_snapshot():
+    """Instruction must not contain the {memory_snapshot} placeholder."""
+    with patch("src.agents.executor_agent.config.get_llm_model", return_value="ollama/llama3.2"):
+        from src.agents import executor_agent
+        agent = executor_agent.build_agent()
+    assert "{memory_snapshot}" not in agent.instruction
+
+
+def test_executor_agent_build_agent_is_synchronous():
+    """build_agent() returns synchronously and is not a coroutine."""
+    import inspect
+    with patch("src.agents.executor_agent.config.get_llm_model", return_value="ollama/llama3.2"):
+        from src.agents import executor_agent
+        result = executor_agent.build_agent()
+    assert not inspect.iscoroutine(result)
+
+
+def test_executor_agent_module_exposes_no_runner_or_event_loop():
+    """Module must not own Runner, InMemorySessionService, or asyncio."""
+    import src.agents.executor_agent as ea
+    assert not hasattr(ea, "Runner")
+    assert not hasattr(ea, "InMemorySessionService")
+    assert not hasattr(ea, "asyncio")
