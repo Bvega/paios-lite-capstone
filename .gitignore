@@ -15,9 +15,11 @@ htmlcov/
 # OS files
 .DS_Store
 
-# Environment files
+# Environment files — ignore real env files, but commit the example template
 .env
-.env.*
+.env.local
+.env.*.local
+!.env.example
 
 # Large docs/assets that are not part of the scaffold
 *.pdf

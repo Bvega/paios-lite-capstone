@@ -1,0 +1,9 @@
+[project]
+name = "paios-lite"
+version = "0.1.0"
+description = "PAIOS-Lite: a local CLI project continuity assistant"
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
