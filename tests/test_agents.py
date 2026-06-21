@@ -212,3 +212,112 @@ def test_planner_agent_module_exposes_no_runner_or_event_loop():
     assert not hasattr(pa, "Runner")
     assert not hasattr(pa, "InMemorySessionService")
     assert not hasattr(pa, "asyncio")
+
+
+# ---------------------------------------------------------------------------
+# Research Agent — construction-only tests (no API key, no LLM call)
+# ---------------------------------------------------------------------------
+
+
+def test_research_agent_build_agent_returns_llm_agent():
+    """build_agent() returns an ADK LlmAgent instance."""
+    from google.adk.agents import LlmAgent
+    with patch("src.agents.research_agent.config.get_llm_model", return_value="ollama/llama3.2"):
+        from src.agents import research_agent
+        agent = research_agent.build_agent()
+    assert isinstance(agent, LlmAgent)
+
+
+def test_research_agent_name():
+    """Agent name is exactly 'research_agent'."""
+    with patch("src.agents.research_agent.config.get_llm_model", return_value="ollama/llama3.2"):
+        from src.agents import research_agent
+        agent = research_agent.build_agent()
+    assert agent.name == "research_agent"
+
+
+def test_research_agent_output_key_is_research_notes():
+    """output_key is exactly 'research_notes'."""
+    with patch("src.agents.research_agent.config.get_llm_model", return_value="ollama/llama3.2"):
+        from src.agents import research_agent
+        agent = research_agent.build_agent()
+    assert agent.output_key == "research_notes"
+
+
+def test_research_agent_model_from_config():
+    """Agent model comes from the patched config.get_llm_model()."""
+    with patch("src.agents.research_agent.config.get_llm_model", return_value="ollama/llama3.2"):
+        from src.agents import research_agent
+        agent = research_agent.build_agent()
+    assert agent.model == "ollama/llama3.2"
+
+
+def test_research_agent_config_called_once_per_build():
+    """config.get_llm_model() is called exactly once per build_agent() call."""
+    mock_get_model = patch(
+        "src.agents.research_agent.config.get_llm_model", return_value="ollama/llama3.2"
+    )
+    with mock_get_model as mock:
+        from src.agents import research_agent
+        research_agent.build_agent()
+    mock.assert_called_once()
+
+
+def test_research_agent_exactly_one_tool():
+    """Exactly one tool is registered on the Research Agent."""
+    with patch("src.agents.research_agent.config.get_llm_model", return_value="ollama/llama3.2"):
+        from src.agents import research_agent
+        agent = research_agent.build_agent()
+    assert len(agent.tools) == 1
+
+
+def test_research_agent_tool_is_search_notes():
+    """The registered tool is search_notes (wrapper-safe check)."""
+    from src.tools.note_searcher import search_notes
+    with patch("src.agents.research_agent.config.get_llm_model", return_value="ollama/llama3.2"):
+        from src.agents import research_agent
+        agent = research_agent.build_agent()
+    tool = agent.tools[0]
+    tool_function = getattr(tool, "func", tool)
+    assert tool_function is search_notes
+
+
+def test_research_agent_instruction_contains_memory_snapshot_placeholder():
+    """Instruction contains the {memory_snapshot} state placeholder."""
+    with patch("src.agents.research_agent.config.get_llm_model", return_value="ollama/llama3.2"):
+        from src.agents import research_agent
+        agent = research_agent.build_agent()
+    assert "{memory_snapshot}" in agent.instruction
+
+
+def test_research_agent_instruction_contains_plan_placeholder():
+    """Instruction contains the {plan} state placeholder."""
+    with patch("src.agents.research_agent.config.get_llm_model", return_value="ollama/llama3.2"):
+        from src.agents import research_agent
+        agent = research_agent.build_agent()
+    assert "{plan}" in agent.instruction
+
+
+def test_research_agent_instruction_contains_project_path_placeholder():
+    """Instruction contains the {project_path} state placeholder."""
+    with patch("src.agents.research_agent.config.get_llm_model", return_value="ollama/llama3.2"):
+        from src.agents import research_agent
+        agent = research_agent.build_agent()
+    assert "{project_path}" in agent.instruction
+
+
+def test_research_agent_build_agent_is_synchronous():
+    """build_agent() returns synchronously and is not a coroutine."""
+    import inspect
+    with patch("src.agents.research_agent.config.get_llm_model", return_value="ollama/llama3.2"):
+        from src.agents import research_agent
+        result = research_agent.build_agent()
+    assert not inspect.iscoroutine(result)
+
+
+def test_research_agent_module_exposes_no_runner_or_event_loop():
+    """Module must not own Runner, InMemorySessionService, or asyncio."""
+    import src.agents.research_agent as ra
+    assert not hasattr(ra, "Runner")
+    assert not hasattr(ra, "InMemorySessionService")
+    assert not hasattr(ra, "asyncio")
