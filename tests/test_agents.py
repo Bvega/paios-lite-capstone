@@ -119,3 +119,96 @@ def test_memory_agent_passes_path_to_async_runner(monkeypatch):
 
     mock_run_async.assert_awaited_once_with(_SAMPLE_FILE)
     assert result == _CANNED_SNAPSHOT
+
+
+# ---------------------------------------------------------------------------
+# Planner Agent — construction-only tests (no API key, no LLM call)
+# ---------------------------------------------------------------------------
+
+
+def test_planner_agent_build_agent_returns_llm_agent(monkeypatch):
+    """build_agent() returns an ADK LlmAgent instance."""
+    from google.adk.agents import LlmAgent
+    with patch("src.agents.planner_agent.config.get_llm_model", return_value="ollama/llama3.2"):
+        from src.agents import planner_agent
+        agent = planner_agent.build_agent()
+    assert isinstance(agent, LlmAgent)
+
+
+def test_planner_agent_name(monkeypatch):
+    """Agent name is exactly 'planner_agent'."""
+    with patch("src.agents.planner_agent.config.get_llm_model", return_value="ollama/llama3.2"):
+        from src.agents import planner_agent
+        agent = planner_agent.build_agent()
+    assert agent.name == "planner_agent"
+
+
+def test_planner_agent_output_key_is_plan(monkeypatch):
+    """output_key is exactly 'plan'."""
+    with patch("src.agents.planner_agent.config.get_llm_model", return_value="ollama/llama3.2"):
+        from src.agents import planner_agent
+        agent = planner_agent.build_agent()
+    assert agent.output_key == "plan"
+
+
+def test_planner_agent_model_from_config(monkeypatch):
+    """Agent model comes from the patched config.get_llm_model()."""
+    with patch("src.agents.planner_agent.config.get_llm_model", return_value="ollama/llama3.2"):
+        from src.agents import planner_agent
+        agent = planner_agent.build_agent()
+    assert agent.model == "ollama/llama3.2"
+
+
+def test_planner_agent_config_called_once_per_build(monkeypatch):
+    """config.get_llm_model() is called exactly once per build_agent() call."""
+    mock_get_model = patch(
+        "src.agents.planner_agent.config.get_llm_model", return_value="ollama/llama3.2"
+    )
+    with mock_get_model as mock:
+        from src.agents import planner_agent
+        planner_agent.build_agent()
+    mock.assert_called_once()
+
+
+def test_planner_agent_exactly_one_tool(monkeypatch):
+    """Exactly one tool is registered on the Planner Agent."""
+    with patch("src.agents.planner_agent.config.get_llm_model", return_value="ollama/llama3.2"):
+        from src.agents import planner_agent
+        agent = planner_agent.build_agent()
+    assert len(agent.tools) == 1
+
+
+def test_planner_agent_tool_is_create_plan(monkeypatch):
+    """The registered tool is create_plan (wrapper-safe check)."""
+    from src.tools.plan_tools import create_plan
+    with patch("src.agents.planner_agent.config.get_llm_model", return_value="ollama/llama3.2"):
+        from src.agents import planner_agent
+        agent = planner_agent.build_agent()
+    tool = agent.tools[0]
+    tool_function = getattr(tool, "func", tool)
+    assert tool_function is create_plan
+
+
+def test_planner_agent_instruction_contains_memory_snapshot_placeholder(monkeypatch):
+    """Instruction contains the literal {memory_snapshot} placeholder."""
+    with patch("src.agents.planner_agent.config.get_llm_model", return_value="ollama/llama3.2"):
+        from src.agents import planner_agent
+        agent = planner_agent.build_agent()
+    assert "{memory_snapshot}" in agent.instruction
+
+
+def test_planner_agent_build_agent_is_synchronous(monkeypatch):
+    """build_agent() returns synchronously and is not a coroutine."""
+    import inspect
+    with patch("src.agents.planner_agent.config.get_llm_model", return_value="ollama/llama3.2"):
+        from src.agents import planner_agent
+        result = planner_agent.build_agent()
+    assert not inspect.iscoroutine(result)
+
+
+def test_planner_agent_module_exposes_no_runner_or_event_loop():
+    """Module must not own Runner, InMemorySessionService, or asyncio."""
+    import src.agents.planner_agent as pa
+    assert not hasattr(pa, "Runner")
+    assert not hasattr(pa, "InMemorySessionService")
+    assert not hasattr(pa, "asyncio")
