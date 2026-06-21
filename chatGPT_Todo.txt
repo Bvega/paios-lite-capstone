@@ -1,8 +1,8 @@
 PAIOS-Lite Kaggle Capstone
 Repository: https://github.com/Bvega/paios-lite-capstone
 Local folder: /Users/miniboli/DEV/paios-lite-capstone
-Branch: main
-Planning baseline commit: 12132b9 — docs: lock paios-lite capstone planning baseline
+Current stable branch: main
+Stable Phase 1 commit: 12f7c666df213dcb9f038389d611d8309b83d63c
 
 ROLE SPLIT
 - ChatGPT: orchestrator, architect, validator, and submission strategist
@@ -12,24 +12,63 @@ ROLE SPLIT
 - Repository: source of truth
 
 CURRENT STATUS
-- Phase 0 — Project initialization and planning baseline: COMPLETE
-- Phase 1 — Foundation / Memory Agent end-to-end: IN PROGRESS
+- Phase 0 — Planning baseline: COMPLETE
+- Phase 1 — Memory Agent foundation: COMPLETE
+- Phase 1 tests: 33 passed
+- Phase 1 local and origin/main: synchronized
+- Phase 2 planning review: COMPLETE
+- Corrected Phase 2 plan: APPROVED
+- Phase 2 implementation: NOT STARTED
+
+PHASE 2 LOCKED OBJECTIVE
+Implement a four-agent ADK SequentialAgent pipeline:
+
+Memory Agent -> Planner Agent -> Research Agent -> Executor Agent
+
+The CLI must produce:
+- CURRENT STATE
+- PLAN
+- RESEARCH NOTES
+- NEXT ACTIONS
+
+REQUIRED ARCHITECTURE CORRECTIONS
+1. memory_agent.py must expose an ADK LlmAgent instance or build_agent() factory.
+2. Planner, Research, and Executor agents must not create separate Runner or session loops.
+3. main.py owns the single SequentialAgent, Runner, session service, and event loop.
+4. Use explicit output_key state handoffs:
+   - memory_snapshot
+   - plan
+   - research_notes
+   - next_actions
+5. Downstream agents must reference prior state keys.
+6. Preserve:
+   python -m paios_lite --context <path>
+7. All tools must remain local pure Python with zero LLM or network calls.
 
 TOP PRIORITY
-1. Run Claude Prompt #4.
-2. Implement the Memory Agent foundation only.
-3. Create the Python package structure.
-4. Add requirements.txt and .env.example.
-5. Add configuration loading.
-6. Add local context-reader tools.
-7. Wire the Memory Agent.
-8. Update the CLI to run the Memory Agent with --context.
-9. Add tests for configuration, context loading, and CLI smoke behavior.
-10. Return Claude's implementation summary, changed-file list, test results, git diff summary, and git status to ChatGPT for validation.
+1. Replace the existing chatGPT_Todo.txt completely with this version.
+2. Save the file and verify that only chatGPT_Todo.txt is modified.
+3. Review the diff.
+4. Commit and push the corrected Phase 2 continuity checkpoint on main.
+5. Verify local HEAD matches origin/main and the working tree is clean.
+6. Create branch:
+   feature/phase2-multi-agent-pipeline
+7. Implement only src/tools/note_searcher.py.
+8. Add focused search_notes tests to tests/test_tools.py.
+9. Run the full test suite and git diff --check.
+10. Stop for ChatGPT validation before committing Phase 2 implementation changes.
 
-CONSTRAINTS
-- Do not implement later agents or submission features.
-- Do not redesign the approved architecture.
-- Keep the implementation small, deterministic, and testable.
-- Do not commit or push until ChatGPT validates the result.
-- Update project continuity documentation only when explicitly included in the approved task.
+PHASE 2A VALIDATION GATE
+- Existing 33 tests remain passing.
+- New search_notes tests pass.
+- src/tools/note_searcher.py contains no network or LLM imports.
+- Search results are deterministic and use stable sorted order.
+- Empty query, missing path, file path, directory path, unreadable files, and no matches are handled cleanly.
+- Only approved Phase 2A files change.
+
+DO NOT
+- Start Phase 2 implementation on main.
+- Modify production code before creating the Phase 2 branch.
+- Implement agents, SequentialAgent wiring, create_plan, render_actions, MCP, or backoff during Phase 2A.
+- Delete or modify chatGPT_Todo(20).txt yet.
+- Append this content to the existing file.
