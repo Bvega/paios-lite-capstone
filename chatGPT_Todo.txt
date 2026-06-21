@@ -1,6 +1,35 @@
-# PAIOS-Lite Capstone Todo
+PAIOS-Lite Kaggle Capstone
+Repository: https://github.com/Bvega/paios-lite-capstone
+Local folder: /Users/miniboli/DEV/paios-lite-capstone
+Branch: main
+Planning baseline commit: 12132b9 — docs: lock paios-lite capstone planning baseline
 
-- [ ] Confirm repository structure
-- [ ] Add placeholder docs and scaffold files
-- [ ] Run basic sanity checks
-- [ ] Commit initial scaffold
+ROLE SPLIT
+- ChatGPT: orchestrator, architect, validator, and submission strategist
+- Claude in VS Code: primary coding executor
+- Codex: small fixes, tests, and boilerplate only
+- Gemini / Antigravity: research and validation support
+- Repository: source of truth
+
+CURRENT STATUS
+- Phase 0 — Project initialization and planning baseline: COMPLETE
+- Phase 1 — Foundation / Memory Agent end-to-end: IN PROGRESS
+
+TOP PRIORITY
+1. Run Claude Prompt #4.
+2. Implement the Memory Agent foundation only.
+3. Create the Python package structure.
+4. Add requirements.txt and .env.example.
+5. Add configuration loading.
+6. Add local context-reader tools.
+7. Wire the Memory Agent.
+8. Update the CLI to run the Memory Agent with --context.
+9. Add tests for configuration, context loading, and CLI smoke behavior.
+10. Return Claude's implementation summary, changed-file list, test results, git diff summary, and git status to ChatGPT for validation.
+
+CONSTRAINTS
+- Do not implement later agents or submission features.
+- Do not redesign the approved architecture.
+- Keep the implementation small, deterministic, and testable.
+- Do not commit or push until ChatGPT validates the result.
+- Update project continuity documentation only when explicitly included in the approved task.
