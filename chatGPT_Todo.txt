@@ -1,10 +1,8 @@
 PAIOS-Lite Kaggle Capstone
 Repository: https://github.com/Bvega/paios-lite-capstone
 Local folder: /Users/miniboli/DEV/paios-lite-capstone
-Current stable main: 08113b0 — docs: approve corrected phase 2 plan
-Active branch: feature/phase2-multi-agent-pipeline
-Phase 2 implementation checkpoint: 3f2314a — feat: polish four-agent continuity brief
-Phase 2 documentation checkpoint: 1ed4c6a — docs: record Phase 2 completion checkpoint
+Phase 2 merged checkpoint: 3bf8e13 — docs: finalize Phase 2 branch checkpoint
+Current branch: main
 Deadline: July 6, 2026
 
 ROLE SPLIT
@@ -19,9 +17,10 @@ CURRENT STATUS
 - Phase 1 — Memory Agent foundation: COMPLETE
   - Validation recorded in docs/PHASE1_VALIDATION.md
 - Phase 2 — Multi-agent Pipeline: COMPLETE
-  - Final Phase 2 implementation commit: 3f2314a
-  - Phase 2 documentation commit: 1ed4c6a
-  - Final automated validation: 146 tests passed
+  - Reviewed, merged, and pushed to main
+  - Main checkpoint: 3bf8e13
+  - 146 automated tests passed
+  - Reported live Gemini smoke test exited 0
   - Four-agent pipeline:
     Memory Agent -> Planner Agent -> Research Agent -> Executor Agent
   - One ADK SequentialAgent
@@ -31,73 +30,73 @@ CURRENT STATUS
     - plan
     - research_notes
     - next_actions
-  - Local tools:
+  - Five local tools implemented:
     - read_project_context
     - get_git_log
     - search_notes
     - create_plan
     - render_actions
-  - Reported live Gemini smoke test:
-    - model: gemini-2.5-flash
-    - exit code: 0
-    - all four agents completed exactly once and in order
-    - continuity brief rendered
-    - all four sections appeared in the required order
-    - all sections contained substantive output
-- Phase 2 documentation checkpoint: COMPLETE (1ed4c6a)
-- Phase 2 branch review, push, and merge: PENDING
 - Phase 3 — MCP Server and Security Hardening: NOT STARTED
 - Phase 4 — Demo, Documentation, and Submission: NOT STARTED
 
-CURRENT TASK
-Push feature/phase2-multi-agent-pipeline and merge the reviewed Phase 2 branch into main.
+PAUSE MILESTONE
+- Project paused after successful completion and merge of Phase 2.
+- Phase 3 has not been initialized.
+- feature/phase3-mcp-security has not been created.
+- No Phase 3 source code, tests, or planning changes have begun.
+- main is the current stable source of truth.
+- Working tree was clean at the pause point.
 
-PHASE 2 COMPLETION SEQUENCE
-1. Complete the four documentation files.
-2. Validate that only the four approved files changed.
-3. Commit the Phase 2 documentation checkpoint.
-4. Review the complete Phase 2 branch.
-5. Push feature/phase2-multi-agent-pipeline.
-6. Merge the reviewed branch into main.
-7. Confirm local main and origin/main are synchronized.
-8. Create feature/phase3-mcp-security.
+RESUME POINT
+When development resumes:
+
+1. Verify local main and origin/main are synchronized.
+2. Confirm the working tree is clean.
+3. Create:
+   feature/phase3-mcp-security
+4. Perform a read-only Phase 3 design review.
+5. Do not implement Phase 3 until ChatGPT approves the design.
+6. Begin with the smallest approved Phase 3 unit, expected to be MCP stdio exposure of the existing local tools.
 
 PHASE 3 OBJECTIVE
-Implement the MCP stdio server and required security hardening without changing the approved four-agent architecture.
+Add MCP stdio exposure and required security hardening without redesigning the approved four-agent pipeline.
 
-PHASE 3 PLANNED TASKS
-1. Design and implement src/tools/mcp_server.py.
-2. Expose all five local tools through the MCP server.
+PLANNED PHASE 3 SCOPE
+1. Design src/tools/mcp_server.py using stdio transport.
+2. Expose the five existing local tools through MCP.
 3. Add tested retry and exponential-backoff behavior for retriable LLM provider failures.
-4. Review and strengthen input-path validation where required.
-5. Preserve the existing CLI:
+4. Review current path validation and apply only required hardening.
+5. Review dependency version constraints and determine final pinning requirements.
+6. Preserve the existing CLI:
    python -m paios_lite --context <path>
-6. Preserve one SequentialAgent, Runner, session service, and event loop.
+7. Keep automated tests free of live provider and network calls.
 
-PHASE 3 ENTRY CONDITIONS
-- Phase 2 documentation checkpoint committed.
-- Complete Phase 2 branch reviewed.
-- feature/phase2-multi-agent-pipeline pushed.
-- Phase 2 merged into main.
-- Local main synchronized with origin/main.
-- 146 tests passing from the merged Phase 2 baseline.
-- New branch feature/phase3-mcp-security created from updated main.
+ARCHITECTURE CONSTRAINTS
+- Preserve agent order:
+  Memory Agent -> Planner Agent -> Research Agent -> Executor Agent
+- Preserve one ADK SequentialAgent.
+- Preserve one Runner.
+- Preserve one session service.
+- Preserve one event loop owned by src/main.py.
+- Preserve the four output state keys.
+- Keep local tools usable without MCP.
+- MCP must wrap existing tool logic rather than duplicate it.
+- No secrets may be committed or displayed.
 
 CARRY-FORWARD ITEMS
+- src/tools/mcp_server.py does not exist.
 - Exponential backoff is not implemented.
-- MCP stdio server is not implemented.
-- Upstream ADK experimental-feature warning is non-blocking.
-- Planner output can appear as a dense paragraph; cosmetic correction is optional.
-- README.md remains a Phase 4 submission task.
-- CAPSTONE_BRIEF.md and SUBMISSION_NOTES.md remain Phase 4 tasks.
-- Demo video and Kaggle writeup remain Phase 4 tasks.
+- requirements.txt uses minimum-version constraints rather than exact pins.
+- Existing path validation requires review before adding new logic.
+- Upstream ADK warnings are non-blocking.
+- Planner paragraph density is cosmetic and optional.
+- README.md, submission documents, demo video, and Kaggle writeup remain Phase 4 work.
 
 DO NOT
-- Begin Phase 3 before Phase 2 is reviewed and merged.
-- Continue Phase 3 work on feature/phase2-multi-agent-pipeline.
-- Push before ChatGPT reviews the completed Phase 2 branch.
+- Create the Phase 3 branch during this milestone.
+- Begin Phase 3 design or implementation.
+- Modify source code or tests.
 - Modify chatGPT_Todo(20).txt.
 - Commit `.env`.
-- Expose API keys or secrets.
-- Add retry/backoff without automated tests.
-- Redesign the approved four-agent pipeline.
+- Display API keys or secrets.
+- Delete the Phase 2 feature branch.
