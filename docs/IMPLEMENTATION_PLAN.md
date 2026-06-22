@@ -226,23 +226,25 @@ The deadline is **July 6, 2026**. The sequence is ordered to produce a
 demoable artifact as early as possible, so the video can be recorded before
 documentation is finalized.
 
-### Phase 1 — Foundation (Days 1–3 · target: June 23)
-- [ ] Add `requirements.txt`, `pyproject.toml`, `.env.example`, `.gitignore` updates
-- [ ] Implement `src/config.py` (env loading, key validation)
-- [ ] Implement `src/tools/context_reader.py` and `src/tools/git_reader.py`
-- [ ] Wire `src/agents/memory_agent.py` to configured LLM via ADK `LlmAgent`
-- [ ] `src/main.py`: accept `--context` arg, run Memory Agent, print raw output
-- **Gate**: `python -m paios_lite --context examples/sample_project_context.md`
-  prints a coherent memory summary
+### Phase 1 — Foundation (Days 1–3 · COMPLETE · 2026-06-20)
+- [x] Add `requirements.txt`, `pyproject.toml`, `.env.example`, `.gitignore` updates
+- [x] Implement `src/config.py` (env loading, key validation)
+- [x] Implement `src/tools/context_reader.py` and `src/tools/git_reader.py`
+- [x] Wire `src/agents/memory_agent.py` to configured LLM via ADK `LlmAgent`
+- [x] `src/main.py`: accept `--context` arg, run Memory Agent, print raw output
+- **Gate: PASSED** · `python -m paios_lite --context examples/sample_project_context.md`
+  prints a coherent memory summary · 33 tests · see `docs/PHASE1_VALIDATION.md`
 
-### Phase 2 — Multi-agent Pipeline (Days 4–6 · target: June 26)
-- [ ] Implement `src/tools/note_searcher.py`
-- [ ] Implement Planner Agent with `create_plan` tool
-- [ ] Implement Research Agent with `search_notes` tool
-- [ ] Implement Executor Agent with `render_actions` tool
-- [ ] Wire agents into ADK `SequentialAgent` pipeline in `main.py`
-- [ ] Polish terminal output (section headers, progress indicators)
-- **Gate**: Full four-agent run produces the continuity brief shown in Section 4
+### Phase 2 — Multi-agent Pipeline (Days 4–6 · COMPLETE · 2026-06-22)
+- [x] Implement `src/tools/note_searcher.py`
+- [x] Implement Planner Agent with `create_plan` tool
+- [x] Implement Research Agent with `search_notes` tool
+- [x] Implement Executor Agent with `render_actions` tool
+- [x] Wire agents into ADK `SequentialAgent` pipeline in `main.py`
+- [x] Polish terminal output (section headers, progress indicators)
+- **Gate: PASSED** · 146 automated tests pass · reported live Gemini smoke test
+  (`gemini-2.5-flash`) exited 0 · four agents completed in order · continuity brief
+  rendered correctly · see `docs/PHASE2_VALIDATION.md`
 
 ### Phase 3 — MCP Server + Security Hardening (Days 7–9 · target: June 29)
 - [ ] Implement `src/tools/mcp_server.py` (stdio transport, exposes all 5 tools)
@@ -270,19 +272,22 @@ documentation is finalized.
 A submission is ready when all of the following are true.
 
 ### Technical
-- [ ] `python -m paios_lite --context <path>` runs end-to-end without errors
-- [ ] All four agents produce distinct, non-placeholder output in the run
-- [ ] At least five MCP tools are registered and callable via the MCP server
-- [ ] No API keys, passwords, or `.env` files exist in the repo
-- [ ] `requirements.txt` is present and all dependencies are pinned
-- [ ] `tests/` includes at least one test per tool function
+- [x] `python -m paios_lite --context <path>` runs end-to-end without errors
+- [x] All four agents produce distinct, non-placeholder output in the run
+- [ ] At least five MCP tools are registered and callable via the MCP server  ← Phase 3
+- [x] No real API keys, secrets, or local `.env` file are tracked; `.env.example`
+  remains tracked as the configuration template
+- [ ] `requirements.txt` is present and all dependencies are pinned  ← `requirements.txt`
+  uses `>=` minimum-version specifiers, not exact pins; address in Phase 3
+- [x] `tests/` includes at least one test per tool function
 
 ### Judging rubric coverage
-- [ ] **Agent / multi-agent system**: four ADK agents in a SequentialAgent pipeline
-- [ ] **MCP server**: `mcp_server.py` with stdio transport
-- [ ] **Security features**: env-only keys, no logging of content, input validation
-- [ ] **Agent skills / agents CLI**: ADK tool decorators and LlmAgent definitions
-- [ ] **Antigravity**: demonstrated in the video walkthrough
+- [x] **Agent / multi-agent system**: four ADK agents in a SequentialAgent pipeline
+- [ ] **MCP server**: `mcp_server.py` with stdio transport  ← Phase 3
+- [ ] **Security features**: env-only keys and path validation are in place; rate-limit
+  retry (exponential backoff) is not yet implemented  ← Phase 3
+- [x] **Agent skills / agents CLI**: ADK tool decorators and LlmAgent definitions
+- [ ] **Antigravity**: demonstrated in the video walkthrough  ← Phase 4
 
 ### Submission completeness
 - [ ] Kaggle writeup published (≤2,500 words)
