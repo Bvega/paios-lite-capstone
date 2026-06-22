@@ -18,7 +18,9 @@ from google.adk.sessions import InMemorySessionService
 from google.genai import types as genai_types
 from rich.console import Console
 from rich.markdown import Markdown
+from rich.panel import Panel
 from rich.rule import Rule
+from rich.text import Text
 
 from src import config
 from src.agents import executor_agent, memory_agent, planner_agent, research_agent
@@ -26,6 +28,13 @@ from src.agents import executor_agent, memory_agent, planner_agent, research_age
 _APP_NAME = "paios_lite"
 _USER_ID = "cli_user"
 _TRIGGER_MESSAGE = "Analyze the project and produce a memory snapshot."
+
+_AGENT_LABELS: dict[str, str] = {
+    "memory_agent":   "Memory Agent",
+    "planner_agent":  "Planner Agent",
+    "research_agent": "Research Agent",
+    "executor_agent": "Executor Agent",
+}
 
 console = Console()
 
@@ -56,12 +65,23 @@ async def _run_pipeline(context_path: str) -> dict[str, str]:
         role="user",
         parts=[genai_types.Part(text=_TRIGGER_MESSAGE)],
     )
-    async for _event in runner.run_async(
+    seen_authors: set[str] = set()
+    async for event in runner.run_async(
         user_id=_USER_ID,
         session_id=session.id,
         new_message=message,
     ):
-        pass
+        author = getattr(event, "author", None)
+        checker = getattr(event, "is_final_response", None)
+        if (
+            author
+            and author in _AGENT_LABELS
+            and author not in seen_authors
+            and callable(checker)
+            and checker()
+        ):
+            seen_authors.add(author)
+            console.print(f"[green]✓[/green] {_AGENT_LABELS[author]} complete")
     final_session = await session_service.get_session(
         app_name=_APP_NAME,
         user_id=_USER_ID,
@@ -119,11 +139,15 @@ def main(argv: list[str] | None = None) -> None:
         console.print(f"\n[red]Configuration error:[/red] {exc}")
         sys.exit(1)
 
-    console.print("[cyan]\\[Pipeline][/cyan] Running four-agent pipeline…")
     results = asyncio.run(_run_pipeline(context_path))
 
     console.print()
-    console.print(Rule("[bold cyan]Memory Snapshot[/bold cyan]"))
+    header = Text(justify="center")
+    header.append("PAIOS-Lite Continuity Brief")
+    console.print(Panel(header))
+    console.print()
+
+    console.print(Rule("[bold cyan]Current State[/bold cyan]"))
     console.print(Markdown(results["memory_snapshot"]))
     console.print()
     console.print(Rule("[bold cyan]Plan[/bold cyan]"))

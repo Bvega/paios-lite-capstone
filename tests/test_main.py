@@ -382,3 +382,218 @@ def test_run_pipeline_raises_when_get_session_returns_none():
         from src.main import _run_pipeline
         with pytest.raises(RuntimeError, match="Pipeline session could not be reloaded"):
             asyncio.run(_run_pipeline(_CONTEXT_PATH))
+
+
+# ---------------------------------------------------------------------------
+# Helpers for Phase 2G event-based progress tests
+# ---------------------------------------------------------------------------
+
+
+def _make_final_event(author: str) -> MagicMock:
+    """Return a mock event whose is_final_response() returns True."""
+    event = MagicMock()
+    event.author = author
+    event.is_final_response = MagicMock(return_value=True)
+    return event
+
+
+def _make_non_final_event(author: str) -> MagicMock:
+    """Return a mock event whose is_final_response() returns False."""
+    event = MagicMock()
+    event.author = author
+    event.is_final_response = MagicMock(return_value=False)
+    return event
+
+
+def _run_pipeline_with_events(*events) -> list:
+    """
+    Run _run_pipeline with a controlled set of mock events.
+    Patches console so no real output is produced.
+    Returns the console.print call_args_list for assertion.
+    """
+    async def _gen():
+        for e in events:
+            yield e
+
+    mock_session = MagicMock()
+    mock_session.id = "sess-progress"
+    mock_final = MagicMock()
+    mock_final.state = {}
+
+    mock_svc = MagicMock()
+    mock_svc.create_session = AsyncMock(return_value=mock_session)
+    mock_svc.get_session    = AsyncMock(return_value=mock_final)
+
+    mock_runner = MagicMock()
+    mock_runner.run_async.return_value = _gen()
+
+    mock_console = MagicMock()
+
+    with (
+        patch("src.main.memory_agent.build_agent",   return_value=MagicMock()),
+        patch("src.main.planner_agent.build_agent",  return_value=MagicMock()),
+        patch("src.main.research_agent.build_agent", return_value=MagicMock()),
+        patch("src.main.executor_agent.build_agent", return_value=MagicMock()),
+        patch("src.main.SequentialAgent",            return_value=MagicMock()),
+        patch("src.main.InMemorySessionService",     return_value=mock_svc),
+        patch("src.main.Runner",                     return_value=mock_runner),
+        patch("src.main.console",                    mock_console),
+    ):
+        from src.main import _run_pipeline
+        asyncio.run(_run_pipeline(_CONTEXT_PATH))
+
+    return mock_console.print.call_args_list
+
+
+def _status_calls(call_args_list: list) -> list[str]:
+    """Return the string args from console.print calls that contain the ✓ marker."""
+    return [
+        call.args[0]
+        for call in call_args_list
+        if call.args and isinstance(call.args[0], str) and "✓" in call.args[0]
+    ]
+
+
+# ---------------------------------------------------------------------------
+# 14. Per-agent completion status: final-response events print exactly once
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("author,label", [
+    ("memory_agent",   "Memory Agent"),
+    ("planner_agent",  "Planner Agent"),
+    ("research_agent", "Research Agent"),
+    ("executor_agent", "Executor Agent"),
+])
+def test_final_event_prints_agent_completion_status(author, label):
+    """A final-response event from a recognized author prints exactly one status line."""
+    calls = _run_pipeline_with_events(_make_final_event(author))
+    statuses = _status_calls(calls)
+    assert len(statuses) == 1
+    assert label in statuses[0]
+
+
+# ---------------------------------------------------------------------------
+# 15. Duplicate final-response events from the same author: no duplicates
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("author", [
+    "memory_agent", "planner_agent", "research_agent", "executor_agent",
+])
+def test_duplicate_final_events_print_status_only_once(author):
+    """Two final-response events from the same author produce exactly one status line."""
+    calls = _run_pipeline_with_events(
+        _make_final_event(author),
+        _make_final_event(author),
+    )
+    statuses = _status_calls(calls)
+    assert len(statuses) == 1
+
+
+# ---------------------------------------------------------------------------
+# 16. Non-final events do not trigger completion status
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("author", [
+    "memory_agent", "planner_agent", "research_agent", "executor_agent",
+])
+def test_non_final_event_does_not_print_completion_status(author):
+    """A non-final event from a recognized author does not print a status line."""
+    calls = _run_pipeline_with_events(_make_non_final_event(author))
+    statuses = _status_calls(calls)
+    assert statuses == []
+
+
+# ---------------------------------------------------------------------------
+# 17. Unknown and authorless events are silently ignored
+# ---------------------------------------------------------------------------
+
+
+def test_unknown_author_does_not_print_completion_status():
+    """A final-response event from an unrecognized author produces no status line."""
+    calls = _run_pipeline_with_events(_make_final_event("some_other_agent"))
+    statuses = _status_calls(calls)
+    assert statuses == []
+
+
+def test_event_without_author_does_not_print_completion_status():
+    """An event with no author attribute produces no status line."""
+    event = MagicMock(spec=[])  # spec=[] → accessing .author raises AttributeError
+    calls = _run_pipeline_with_events(event)
+    statuses = _status_calls(calls)
+    assert statuses == []
+
+
+# ---------------------------------------------------------------------------
+# 18. main() output: continuity-brief panel and section title order
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture
+def main_output():
+    """
+    Run main() with fully mocked infrastructure; capture all console.print calls.
+    _run_pipeline is replaced with a fast coroutine returning _CANNED_STATE.
+    No API key, no network call, no filesystem access.
+    """
+    mock_console = MagicMock()
+
+    async def _fake_pipeline(path: str) -> dict:
+        return dict(_CANNED_STATE)
+
+    with (
+        patch("src.main._run_pipeline", side_effect=_fake_pipeline),
+        patch("src.main.config.validate_config"),
+        patch("src.main.Path") as mock_path_cls,
+        patch("src.main.console", mock_console),
+    ):
+        mock_path_cls.return_value.exists.return_value = True
+        from src.main import main
+        main(["--context", _CONTEXT_PATH])
+
+    return mock_console.print.call_args_list
+
+
+def test_main_prints_continuity_brief_panel(main_output):
+    """main() prints exactly one Panel for the continuity brief."""
+    from rich.panel import Panel
+    panels = [
+        c.args[0] for c in main_output
+        if c.args and isinstance(c.args[0], Panel)
+    ]
+    assert len(panels) == 1
+
+
+def test_main_panel_contains_continuity_brief_text(main_output):
+    """The continuity-brief Panel's renderable contains the expected title text."""
+    from rich.panel import Panel
+    from rich.text import Text
+    panels = [
+        c.args[0] for c in main_output
+        if c.args and isinstance(c.args[0], Panel)
+    ]
+    assert len(panels) == 1
+    renderable = panels[0].renderable
+    panel_text = renderable.plain if isinstance(renderable, Text) else str(renderable)
+    assert "PAIOS-Lite Continuity Brief" in panel_text
+
+
+def test_main_section_titles_in_correct_order(main_output):
+    """Section Rule titles appear in order: Current State, Plan, Research Notes, Next Actions."""
+    from rich.rule import Rule
+    rule_titles = [
+        c.args[0].title
+        for c in main_output
+        if c.args and isinstance(c.args[0], Rule) and getattr(c.args[0], "title", "")
+    ]
+    expected = ["Current State", "Plan", "Research Notes", "Next Actions"]
+    positions = []
+    for exp in expected:
+        pos = next((i for i, t in enumerate(rule_titles) if exp in t), None)
+        assert pos is not None, f"Section title '{exp}' not found in Rule titles: {rule_titles}"
+        positions.append(pos)
+    assert positions == sorted(positions), (
+        f"Section titles not in expected order. Positions: {positions}, titles: {rule_titles}"
+    )
