@@ -1,9 +1,11 @@
 PAIOS-Lite Kaggle Capstone
 Repository: https://github.com/Bvega/paios-lite-capstone
 Local folder: /Users/miniboli/DEV/paios-lite-capstone
-Phase 2 merged main checkpoint: 36f0ce5 — docs: record Phase 2 pause milestone
+Main Phase 2 checkpoint: 36f0ce5 — docs: record Phase 2 pause milestone
 Active branch: feature/phase3-mcp-security
-Phase 3A implementation checkpoint: 8ec6002 — feat: add MCP stdio server for local tools
+Phase 3A checkpoint: 8ec6002 — feat: add MCP stdio server for local tools
+Phase 3A documentation checkpoint: 92f811b — docs: record Phase 3A MCP checkpoint
+Phase 3B checkpoint: ae98442 — feat: add transient-failure retry to pipeline entry point
 Deadline: July 6, 2026
 
 ROLE SPLIT
@@ -21,14 +23,16 @@ CURRENT STATUS
 - Phase 2 — Multi-agent Pipeline: COMPLETE
   - Merged and pushed to main
   - Main checkpoint: 36f0ce5
-  - Four-agent pipeline:
+  - Pipeline:
     Memory Agent -> Planner Agent -> Research Agent -> Executor Agent
-  - 146 automated tests passed at the Phase 2 baseline
+  - Phase 2 baseline validation:
+    146 tests passed
 - Phase 3 — MCP Server and Security Hardening: IN PROGRESS
   - Phase 3A — MCP stdio server: COMPLETE
-  - Phase 3B — Retry/backoff review: NOT STARTED
+  - Phase 3B — Retry and exponential backoff: COMPLETE
   - Phase 3C — Path-validation review: COMPLETE; no changes required
-  - Phase 3D — Dependency reproducibility: PENDING
+  - Phase 3D — Dependency reproducibility: NOT STARTED
+  - Final Phase 3 validation: PENDING
 - Phase 4 — Demo, Documentation, and Submission: NOT STARTED
 
 PHASE 3A RESULT
@@ -44,76 +48,108 @@ PHASE 3A RESULT
   - create_plan
   - render_actions
 - Existing tool logic remains independently callable
-- Invalid path errors are sanitized before MCP responses
+- Invalid path errors are sanitized
 - Official MCP client validation passed
-- Automated validation:
-  - 175 tests passed
-  - 0 failures
-  - 5 upstream ADK warnings
-- Existing CLI and four-agent pipeline remain unchanged
-- Phase 3A branch has not been pushed
+- Existing CLI and agent pipeline remained unchanged
+
+PHASE 3B RESULT
+- Commit: ae98442
+- Added transient provider retry at the pipeline entry point
+- Maximum total attempts: 3
+- Exponential delays:
+  - approximately 2 seconds after attempt 1
+  - approximately 4 seconds after attempt 2
+- Uniform jitter:
+  0.0 to 1.0 seconds
+- Retriable structured HTTP codes:
+  - 408
+  - 429
+  - 500
+  - 502
+  - 503
+  - 504
+- Retriable network failures:
+  - httpx.TimeoutException
+  - httpx.ConnectError
+- Non-retriable errors propagate immediately
+- One asyncio.run() call remains owned by src/main.py
+- Fresh SequentialAgent, Runner, session service, and session are created for each attempt
+- Agent completion lines are not duplicated across retries
+- Provider terminal errors are sanitized
+- No raw provider exception messages, response bodies, headers, paths, or secrets are printed
+- No agent or tool files were modified
+- MCP behavior remained unchanged
+
+CURRENT AUTOMATED VALIDATION
+- 207 tests passed
+- 0 failures
+- 5 upstream ADK warnings
+- py_compile passed
+- pip check passed
+- .env restoration procedure verified
+- Working tree clean after Phase 3B commit
 
 CURRENT TASK
-Perform a focused read-only Phase 3B retry/backoff design review.
+Perform Phase 3D dependency reproducibility review and implementation.
 
-PHASE 3B REVIEW OBJECTIVE
-Determine whether retriable LLM provider failures can be handled safely without redesigning the approved four-agent pipeline or repeating unsafe side effects.
+PHASE 3D OBJECTIVE
+Produce a reproducible but platform-compatible dependency declaration for Kaggle reviewers without freezing platform-specific transitive dependencies.
 
-REVIEW QUESTIONS
-1. Identify the exact exception types that reach src/main.py.
-2. Confirm whether Google ADK or google-genai already performs retries.
-3. Determine whether retrying the full pipeline is safe and acceptable.
-4. Determine whether retry should wrap:
-   - Runner event consumption
-   - the complete _run_pipeline call
-   - model configuration
-   - an ADK plugin or callback
-5. Retry only demonstrated transient failures:
-   - HTTP 429 rate limits
-   - HTTP 500, 502, 503, and 504
-   - transient timeouts or connection failures when safely identifiable
-6. Never retry:
-   - invalid API keys
-   - permission errors
-   - invalid models
-   - malformed requests
-   - local configuration failures
-7. Define exact tests using mocks with no real waiting, provider calls, or network access.
-8. Determine whether Tenacity should become a direct dependency or whether a standard-library implementation is safer.
+PHASE 3D REVIEW QUESTIONS
+1. Confirm all project code imports that correspond to direct dependencies.
+2. Identify the installed and declared version of every direct dependency.
+3. Determine which dependencies should use exact version pins.
+4. Do not use pip freeze as the primary requirements file.
+5. Do not pin macOS-specific or Python-3.14-specific transitive packages.
+6. Confirm compatibility with likely Kaggle Python versions.
+7. Decide whether pyproject.toml must also be updated.
+8. Determine whether pytest should remain a runtime requirement or move to an optional development group.
+9. Define clean-environment validation commands.
+10. Make only the smallest required dependency changes.
+
+CURRENT DIRECT DEPENDENCY STATE
+- google-adk currently declared with a minimum version
+- python-dotenv currently declared with a minimum version
+- rich currently declared with a minimum version
+- pytest currently declared with a minimum version
+- mcp==1.28.0
+- httpx==0.28.1
+
+DEPENDENCY CONSTRAINTS
+- Do not add Tenacity.
+- Do not use pip freeze to replace requirements.txt.
+- Do not pin all transitive dependencies.
+- Do not introduce a platform-specific lock file unless clearly justified.
+- Preserve compatibility with Kaggle/Linux.
+- Do not upgrade dependencies during Phase 3D unless required by a demonstrated incompatibility.
+- Do not alter source code as part of dependency pinning.
 
 ARCHITECTURE CONSTRAINTS
-- Preserve agent order:
-  Memory Agent -> Planner Agent -> Research Agent -> Executor Agent
-- Preserve one ADK SequentialAgent.
-- Preserve one Runner.
-- Preserve one session service.
+- Preserve the four-agent order.
+- Preserve one SequentialAgent.
+- Preserve one Runner per pipeline attempt.
+- Preserve one session service per pipeline attempt.
 - Preserve one event loop owned by src/main.py.
 - Preserve the existing CLI.
-- Preserve all four output state keys.
-- Do not modify individual agents for retry handling.
-- Do not retry local tool failures.
-- Automated tests must remain network-free and key-free.
-
-DEPENDENCY STATUS
-- requirements.txt currently declares mcp==1.28.0.
-- Other direct dependencies still use minimum-version constraints.
-- Tenacity is installed transitively but is not declared directly.
-- Do not import Tenacity in project code unless it is added as a direct dependency.
-- Do not use pip freeze for submission dependency management.
+- Preserve the MCP stdio server.
+- Preserve the four output state keys.
+- Keep automated tests key-free and network-free.
 
 CARRY-FORWARD ITEMS
-- Retry/backoff design requires focused approval.
-- Direct dependency pinning remains pending.
-- README.md and submission documents remain Phase 4 work.
-- Planner paragraph density remains cosmetic and optional.
-- Upstream ADK warnings remain non-blocking.
+- Phase 3 final validation remains pending.
+- Phase 3 branch remains local and unpushed.
+- README and submission documents remain Phase 4 work.
+- Demo script and video remain Phase 4 work.
+- Kaggle write-up and final submission remain Phase 4 work.
+- Planner paragraph density remains optional and cosmetic.
+- ADK warnings remain upstream and non-blocking.
 
 DO NOT
-- Begin Phase 3B implementation before the review is approved.
-- Modify source code or tests during the review.
-- Push the Phase 3 branch before ChatGPT reviews it.
+- Begin Phase 3D implementation during this checkpoint update.
+- Modify source code or tests.
+- Push the branch.
 - Modify chatGPT_Todo(20).txt.
-- Commit `.env`.
+- Create alternate TODO files.
+- Commit .env.
 - Display secrets.
-- Redesign the agent pipeline.
 - Begin Phase 4.
