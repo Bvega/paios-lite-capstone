@@ -3,17 +3,13 @@ Repository: https://github.com/Bvega/paios-lite-capstone
 Local folder: /Users/miniboli/DEV/paios-lite-capstone
 Main Phase 2 checkpoint: 36f0ce5 — docs: record Phase 2 pause milestone
 Active branch: feature/phase3-mcp-security
-Phase 3A implementation: 8ec6002 — feat: add MCP stdio server for local tools
-Phase 3A checkpoint: 92f811b — docs: record Phase 3A MCP checkpoint
-Phase 3B implementation: ae98442 — feat: add transient-failure retry to pipeline entry point
-Phase 3B checkpoint: 6f387a8 — docs: record Phase 3B retry checkpoint
-Phase 3D implementation: 8ff58d3 — chore: pin direct dependencies for reproducibility
+Final Phase 3 technical checkpoint: bae04b0 — test: prevent unawaited retry coroutine warning
 Deadline: July 6, 2026
 
 ROLE SPLIT
 - ChatGPT: orchestrator, architect, validator, and submission strategist
 - Claude in VS Code: primary coding executor
-- Codex: small fixes, tests, and boilerplate only
+- Codex in VS Code: approved for focused fixes, tests, validation, and documentation
 - Gemini: demonstrated runtime model and validation support
 - Antigravity: optional course tool; not required for implementation
 - Repository: source of truth
@@ -24,155 +20,72 @@ CURRENT STATUS
 - Phase 2 — Multi-agent Pipeline: COMPLETE
   - Merged and pushed to main
   - Main checkpoint: 36f0ce5
-  - Pipeline:
-    Memory Agent -> Planner Agent -> Research Agent -> Executor Agent
-  - Phase 2 baseline:
-    146 tests passed
-- Phase 3 — MCP Server and Security Hardening: IN PROGRESS
+- Phase 3 — MCP Server and Security Hardening: COMPLETE
   - Phase 3A — MCP stdio server: COMPLETE
   - Phase 3B — Retry and exponential backoff: COMPLETE
-  - Phase 3C — Path-validation review: COMPLETE; no changes required
+  - Phase 3C — Path-validation review: COMPLETE
   - Phase 3D — Dependency reproducibility: COMPLETE
-  - Final Phase 3 validation: NOT STARTED
+  - Final Phase 3 validation: PASSED
 - Phase 4 — Demo, Documentation, and Submission: NOT STARTED
 
-PHASE 3A RESULT
-- Commit: 8ec6002
-- MCP SDK: mcp==1.28.0
+PHASE 3 COMMITS
+- 8ec6002 feat: add MCP stdio server for local tools
+- 92f811b docs: record Phase 3A MCP checkpoint
+- ae98442 feat: add transient-failure retry to pipeline entry point
+- 6f387a8 docs: record Phase 3B retry checkpoint
+- 8ff58d3 chore: pin direct dependencies for reproducibility
+- 7a69881 docs: record Phase 3D dependency checkpoint
+- bae04b0 test: prevent unawaited retry coroutine warning
+
+PHASE 3 FINAL RESULT
 - FastMCP stdio server implemented
-- Start command:
-  python -m paios_lite.tools.mcp_server
-- Five existing tools exposed:
-  - read_project_context
-  - get_git_log
-  - search_notes
-  - create_plan
-  - render_actions
-- Original local tools remain independently callable
-- Invalid path errors are sanitized
-- Official MCP client validation passed
-- Existing CLI and four-agent pipeline remained unchanged
-
-PHASE 3B RESULT
-- Commit: ae98442
-- Transient provider retry implemented at the pipeline entry point
-- Maximum total attempts: 3
-- Exponential retry delays:
-  - approximately 2 seconds after failed attempt 1
-  - approximately 4 seconds after failed attempt 2
-- Uniform jitter:
-  0.0 to 1.0 seconds
-- Retriable HTTP codes:
-  - 408
-  - 429
-  - 500
-  - 502
-  - 503
-  - 504
-- Retriable network exceptions:
-  - httpx.TimeoutException
-  - httpx.ConnectError
-- Non-retriable errors propagate immediately
-- One asyncio.run() remains owned by src/main.py
-- Fresh SequentialAgent, Runner, session service, and session per attempt
-- Duplicate agent-completion messages prevented across retries
-- Provider terminal output is sanitized
-- No agent or tool files changed
-- MCP behavior remained unchanged
-
-PHASE 3C RESULT
-- Existing path validation reviewed
-- Null bytes rejected
-- Paths resolved before use
-- Missing paths rejected
-- Markdown search remains under the supplied root
-- Git subprocess uses argument-list execution without shell=True
-- No demonstrated security gap required a source change
-
-PHASE 3D RESULT
-- Commit: 8ff58d3
-- requirements.txt is the authoritative dependency source
-- Exact direct dependency pins:
-  - google-adk==2.3.0
-  - google-genai==2.9.0
-  - python-dotenv==1.2.2
-  - rich==15.0.0
-  - mcp==1.28.0
-  - httpx==0.28.1
-  - pytest==9.1.1
-- google-genai is explicitly declared because project code imports it directly
-- Transitive dependencies remain resolver-managed
-- No platform-specific lock file created
-- pyproject.toml unchanged
-- Current Python 3.14 environment validation:
+- Five existing tools exposed through MCP
+- Invalid path errors sanitized
+- Transient provider retry implemented
+- One asyncio.run() preserved
+- Fresh pipeline state created per retry attempt
+- Duplicate progress messages prevented
+- Path validation reviewed; no source correction required
+- Seven direct dependencies exactly pinned
+- Python 3.14 validation:
   - 207 tests passed
-  - pip check passed
-- Clean Python 3.11 environment validation:
-  - installation passed
-  - pip check passed
+  - 5 upstream warnings
+- Python 3.11 validation:
   - 207 tests passed
-  - CLI --help passed
-  - MCP import passed
-- One additional Python 3.11 RuntimeWarning about an unawaited coroutine remains for final validation review
-
-CURRENT AUTOMATED VALIDATION
-- 207 tests passed
-- 0 failures
-- 5 warnings in the current Python 3.14 environment
-- 6 warnings in the clean Python 3.11 environment
-- Current and clean-environment pip checks passed
-- CLI import and help validation passed
-- MCP import and stdio validation passed
-- Working tree clean after Phase 3D commit
+  - 5 upstream warnings
+- MCP official-client validation passed
+- Controlled live Gemini CLI validation passed
+- CLI exit code 0
+- All four agents completed exactly once
+- All four output sections present and ordered
+- No traceback
+- No secrets or credentials tracked
+- Working tree clean
+- Phase 3 branch has not yet been pushed or merged
 
 CURRENT TASK
-Perform final Phase 3 validation.
+Record the final Phase 3 documentation milestone.
 
-FINAL PHASE 3 VALIDATION OBJECTIVES
-1. Verify all Phase 3 commits and changed files.
-2. Run static checks and all 207 tests.
-3. Repeat MCP official-client stdio validation.
-4. Run one controlled live CLI validation with the configured Gemini model.
-5. Confirm retry code does not alter normal successful output.
-6. Review the Python 3.11 unawaited-coroutine RuntimeWarning.
-7. Correct the warning only if it is caused by project test code and can be fixed safely without changing runtime behavior.
-8. Confirm no secret, .env file, credential, or raw provider response is tracked.
-9. Confirm requirements.txt installs consistently.
-10. Produce the final Phase 3 validation report before any branch push or merge.
+NEXT TASK
+1. Push feature/phase3-mcp-security.
+2. Verify remote branch.
+3. Fast-forward merge Phase 3 into main.
+4. Push main.
+5. Preserve the Phase 3 feature branch.
+6. Begin Phase 4 planning only after merge verification.
 
-ARCHITECTURE CONSTRAINTS
-- Preserve agent order:
-  Memory Agent -> Planner Agent -> Research Agent -> Executor Agent
-- Preserve one ADK SequentialAgent.
-- Preserve one Runner per pipeline attempt.
-- Preserve one session service per pipeline attempt.
-- Preserve one event loop owned by src/main.py.
-- Preserve the CLI:
-  python -m paios_lite --context <path>
-- Preserve state keys:
-  - memory_snapshot
-  - plan
-  - research_notes
-  - next_actions
-- Preserve the MCP stdio server and five tool names.
-- Keep automated tests network-free and key-free.
-
-CARRY-FORWARD ITEMS
-- Phase 3 branch remains local and unpushed.
-- Final Phase 3 validation remains pending.
-- Phase 4 README and submission documentation remain pending.
-- Demo script and video remain pending.
-- Kaggle write-up and submission remain pending.
-- Planner paragraph density remains optional and cosmetic.
-- Upstream ADK deprecation warnings remain non-blocking.
+PHASE 4 SCOPE
+- Final README
+- Architecture and usage documentation
+- Demo script
+- Video walkthrough
+- Kaggle write-up
+- Submission checklist
+- Final public-repository verification
 
 DO NOT
-- Begin final Phase 3 validation during this checkpoint update.
-- Modify source code or tests.
-- Modify requirements.txt or pyproject.toml.
-- Push the branch.
-- Modify chatGPT_Todo(20).txt.
+- Begin Phase 4 before Phase 3 is merged and verified.
+- Delete the Phase 3 feature branch.
+- Commit .env or secrets.
 - Create alternate or numbered TODO files.
-- Commit .env.
-- Display secrets.
-- Begin Phase 4.
+- Modify chatGPT_Todo(20).txt.
