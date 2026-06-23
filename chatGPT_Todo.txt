@@ -3,9 +3,11 @@ Repository: https://github.com/Bvega/paios-lite-capstone
 Local folder: /Users/miniboli/DEV/paios-lite-capstone
 Main Phase 2 checkpoint: 36f0ce5 — docs: record Phase 2 pause milestone
 Active branch: feature/phase3-mcp-security
-Phase 3A checkpoint: 8ec6002 — feat: add MCP stdio server for local tools
-Phase 3A documentation checkpoint: 92f811b — docs: record Phase 3A MCP checkpoint
-Phase 3B checkpoint: ae98442 — feat: add transient-failure retry to pipeline entry point
+Phase 3A implementation: 8ec6002 — feat: add MCP stdio server for local tools
+Phase 3A checkpoint: 92f811b — docs: record Phase 3A MCP checkpoint
+Phase 3B implementation: ae98442 — feat: add transient-failure retry to pipeline entry point
+Phase 3B checkpoint: 6f387a8 — docs: record Phase 3B retry checkpoint
+Phase 3D implementation: 8ff58d3 — chore: pin direct dependencies for reproducibility
 Deadline: July 6, 2026
 
 ROLE SPLIT
@@ -19,20 +21,19 @@ ROLE SPLIT
 CURRENT STATUS
 - Phase 0 — Planning baseline: COMPLETE
 - Phase 1 — Memory Agent foundation: COMPLETE
-  - Validation recorded in docs/PHASE1_VALIDATION.md
 - Phase 2 — Multi-agent Pipeline: COMPLETE
   - Merged and pushed to main
   - Main checkpoint: 36f0ce5
   - Pipeline:
     Memory Agent -> Planner Agent -> Research Agent -> Executor Agent
-  - Phase 2 baseline validation:
+  - Phase 2 baseline:
     146 tests passed
 - Phase 3 — MCP Server and Security Hardening: IN PROGRESS
   - Phase 3A — MCP stdio server: COMPLETE
   - Phase 3B — Retry and exponential backoff: COMPLETE
   - Phase 3C — Path-validation review: COMPLETE; no changes required
-  - Phase 3D — Dependency reproducibility: NOT STARTED
-  - Final Phase 3 validation: PENDING
+  - Phase 3D — Dependency reproducibility: COMPLETE
+  - Final Phase 3 validation: NOT STARTED
 - Phase 4 — Demo, Documentation, and Submission: NOT STARTED
 
 PHASE 3A RESULT
@@ -41,115 +42,137 @@ PHASE 3A RESULT
 - FastMCP stdio server implemented
 - Start command:
   python -m paios_lite.tools.mcp_server
-- Five existing local tools exposed:
+- Five existing tools exposed:
   - read_project_context
   - get_git_log
   - search_notes
   - create_plan
   - render_actions
-- Existing tool logic remains independently callable
+- Original local tools remain independently callable
 - Invalid path errors are sanitized
 - Official MCP client validation passed
-- Existing CLI and agent pipeline remained unchanged
+- Existing CLI and four-agent pipeline remained unchanged
 
 PHASE 3B RESULT
 - Commit: ae98442
-- Added transient provider retry at the pipeline entry point
+- Transient provider retry implemented at the pipeline entry point
 - Maximum total attempts: 3
-- Exponential delays:
-  - approximately 2 seconds after attempt 1
-  - approximately 4 seconds after attempt 2
+- Exponential retry delays:
+  - approximately 2 seconds after failed attempt 1
+  - approximately 4 seconds after failed attempt 2
 - Uniform jitter:
   0.0 to 1.0 seconds
-- Retriable structured HTTP codes:
+- Retriable HTTP codes:
   - 408
   - 429
   - 500
   - 502
   - 503
   - 504
-- Retriable network failures:
+- Retriable network exceptions:
   - httpx.TimeoutException
   - httpx.ConnectError
 - Non-retriable errors propagate immediately
-- One asyncio.run() call remains owned by src/main.py
-- Fresh SequentialAgent, Runner, session service, and session are created for each attempt
-- Agent completion lines are not duplicated across retries
-- Provider terminal errors are sanitized
-- No raw provider exception messages, response bodies, headers, paths, or secrets are printed
-- No agent or tool files were modified
+- One asyncio.run() remains owned by src/main.py
+- Fresh SequentialAgent, Runner, session service, and session per attempt
+- Duplicate agent-completion messages prevented across retries
+- Provider terminal output is sanitized
+- No agent or tool files changed
 - MCP behavior remained unchanged
+
+PHASE 3C RESULT
+- Existing path validation reviewed
+- Null bytes rejected
+- Paths resolved before use
+- Missing paths rejected
+- Markdown search remains under the supplied root
+- Git subprocess uses argument-list execution without shell=True
+- No demonstrated security gap required a source change
+
+PHASE 3D RESULT
+- Commit: 8ff58d3
+- requirements.txt is the authoritative dependency source
+- Exact direct dependency pins:
+  - google-adk==2.3.0
+  - google-genai==2.9.0
+  - python-dotenv==1.2.2
+  - rich==15.0.0
+  - mcp==1.28.0
+  - httpx==0.28.1
+  - pytest==9.1.1
+- google-genai is explicitly declared because project code imports it directly
+- Transitive dependencies remain resolver-managed
+- No platform-specific lock file created
+- pyproject.toml unchanged
+- Current Python 3.14 environment validation:
+  - 207 tests passed
+  - pip check passed
+- Clean Python 3.11 environment validation:
+  - installation passed
+  - pip check passed
+  - 207 tests passed
+  - CLI --help passed
+  - MCP import passed
+- One additional Python 3.11 RuntimeWarning about an unawaited coroutine remains for final validation review
 
 CURRENT AUTOMATED VALIDATION
 - 207 tests passed
 - 0 failures
-- 5 upstream ADK warnings
-- py_compile passed
-- pip check passed
-- .env restoration procedure verified
-- Working tree clean after Phase 3B commit
+- 5 warnings in the current Python 3.14 environment
+- 6 warnings in the clean Python 3.11 environment
+- Current and clean-environment pip checks passed
+- CLI import and help validation passed
+- MCP import and stdio validation passed
+- Working tree clean after Phase 3D commit
 
 CURRENT TASK
-Perform Phase 3D dependency reproducibility review and implementation.
+Perform final Phase 3 validation.
 
-PHASE 3D OBJECTIVE
-Produce a reproducible but platform-compatible dependency declaration for Kaggle reviewers without freezing platform-specific transitive dependencies.
-
-PHASE 3D REVIEW QUESTIONS
-1. Confirm all project code imports that correspond to direct dependencies.
-2. Identify the installed and declared version of every direct dependency.
-3. Determine which dependencies should use exact version pins.
-4. Do not use pip freeze as the primary requirements file.
-5. Do not pin macOS-specific or Python-3.14-specific transitive packages.
-6. Confirm compatibility with likely Kaggle Python versions.
-7. Decide whether pyproject.toml must also be updated.
-8. Determine whether pytest should remain a runtime requirement or move to an optional development group.
-9. Define clean-environment validation commands.
-10. Make only the smallest required dependency changes.
-
-CURRENT DIRECT DEPENDENCY STATE
-- google-adk currently declared with a minimum version
-- python-dotenv currently declared with a minimum version
-- rich currently declared with a minimum version
-- pytest currently declared with a minimum version
-- mcp==1.28.0
-- httpx==0.28.1
-
-DEPENDENCY CONSTRAINTS
-- Do not add Tenacity.
-- Do not use pip freeze to replace requirements.txt.
-- Do not pin all transitive dependencies.
-- Do not introduce a platform-specific lock file unless clearly justified.
-- Preserve compatibility with Kaggle/Linux.
-- Do not upgrade dependencies during Phase 3D unless required by a demonstrated incompatibility.
-- Do not alter source code as part of dependency pinning.
+FINAL PHASE 3 VALIDATION OBJECTIVES
+1. Verify all Phase 3 commits and changed files.
+2. Run static checks and all 207 tests.
+3. Repeat MCP official-client stdio validation.
+4. Run one controlled live CLI validation with the configured Gemini model.
+5. Confirm retry code does not alter normal successful output.
+6. Review the Python 3.11 unawaited-coroutine RuntimeWarning.
+7. Correct the warning only if it is caused by project test code and can be fixed safely without changing runtime behavior.
+8. Confirm no secret, .env file, credential, or raw provider response is tracked.
+9. Confirm requirements.txt installs consistently.
+10. Produce the final Phase 3 validation report before any branch push or merge.
 
 ARCHITECTURE CONSTRAINTS
-- Preserve the four-agent order.
-- Preserve one SequentialAgent.
+- Preserve agent order:
+  Memory Agent -> Planner Agent -> Research Agent -> Executor Agent
+- Preserve one ADK SequentialAgent.
 - Preserve one Runner per pipeline attempt.
 - Preserve one session service per pipeline attempt.
 - Preserve one event loop owned by src/main.py.
-- Preserve the existing CLI.
-- Preserve the MCP stdio server.
-- Preserve the four output state keys.
-- Keep automated tests key-free and network-free.
+- Preserve the CLI:
+  python -m paios_lite --context <path>
+- Preserve state keys:
+  - memory_snapshot
+  - plan
+  - research_notes
+  - next_actions
+- Preserve the MCP stdio server and five tool names.
+- Keep automated tests network-free and key-free.
 
 CARRY-FORWARD ITEMS
-- Phase 3 final validation remains pending.
 - Phase 3 branch remains local and unpushed.
-- README and submission documents remain Phase 4 work.
-- Demo script and video remain Phase 4 work.
-- Kaggle write-up and final submission remain Phase 4 work.
+- Final Phase 3 validation remains pending.
+- Phase 4 README and submission documentation remain pending.
+- Demo script and video remain pending.
+- Kaggle write-up and submission remain pending.
 - Planner paragraph density remains optional and cosmetic.
-- ADK warnings remain upstream and non-blocking.
+- Upstream ADK deprecation warnings remain non-blocking.
 
 DO NOT
-- Begin Phase 3D implementation during this checkpoint update.
+- Begin final Phase 3 validation during this checkpoint update.
 - Modify source code or tests.
+- Modify requirements.txt or pyproject.toml.
 - Push the branch.
 - Modify chatGPT_Todo(20).txt.
-- Create alternate TODO files.
+- Create alternate or numbered TODO files.
 - Commit .env.
 - Display secrets.
 - Begin Phase 4.
