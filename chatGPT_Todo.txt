@@ -1,15 +1,17 @@
 PAIOS-Lite Kaggle Capstone
 Repository: https://github.com/Bvega/paios-lite-capstone
 Local folder: /Users/miniboli/DEV/paios-lite-capstone
-Phase 2 merged checkpoint: 3bf8e13 — docs: finalize Phase 2 branch checkpoint
-Current branch: main
+Phase 2 merged main checkpoint: 36f0ce5 — docs: record Phase 2 pause milestone
+Active branch: feature/phase3-mcp-security
+Phase 3A implementation checkpoint: 8ec6002 — feat: add MCP stdio server for local tools
 Deadline: July 6, 2026
 
 ROLE SPLIT
 - ChatGPT: orchestrator, architect, validator, and submission strategist
 - Claude in VS Code: primary coding executor
 - Codex: small fixes, tests, and boilerplate only
-- Gemini / Antigravity: research and validation support
+- Gemini: demonstrated runtime model and validation support
+- Antigravity: optional course tool; not required for implementation
 - Repository: source of truth
 
 CURRENT STATUS
@@ -17,59 +19,67 @@ CURRENT STATUS
 - Phase 1 — Memory Agent foundation: COMPLETE
   - Validation recorded in docs/PHASE1_VALIDATION.md
 - Phase 2 — Multi-agent Pipeline: COMPLETE
-  - Reviewed, merged, and pushed to main
-  - Main checkpoint: 3bf8e13
-  - 146 automated tests passed
-  - Reported live Gemini smoke test exited 0
+  - Merged and pushed to main
+  - Main checkpoint: 36f0ce5
   - Four-agent pipeline:
     Memory Agent -> Planner Agent -> Research Agent -> Executor Agent
-  - One ADK SequentialAgent
-  - One Runner, session service, and event loop owned by src/main.py
-  - State keys:
-    - memory_snapshot
-    - plan
-    - research_notes
-    - next_actions
-  - Five local tools implemented:
-    - read_project_context
-    - get_git_log
-    - search_notes
-    - create_plan
-    - render_actions
-- Phase 3 — MCP Server and Security Hardening: NOT STARTED
+  - 146 automated tests passed at the Phase 2 baseline
+- Phase 3 — MCP Server and Security Hardening: IN PROGRESS
+  - Phase 3A — MCP stdio server: COMPLETE
+  - Phase 3B — Retry/backoff review: NOT STARTED
+  - Phase 3C — Path-validation review: COMPLETE; no changes required
+  - Phase 3D — Dependency reproducibility: PENDING
 - Phase 4 — Demo, Documentation, and Submission: NOT STARTED
 
-PAUSE MILESTONE
-- Project paused after successful completion and merge of Phase 2.
-- Phase 3 has not been initialized.
-- feature/phase3-mcp-security has not been created.
-- No Phase 3 source code, tests, or planning changes have begun.
-- main is the current stable source of truth.
-- Working tree was clean at the pause point.
+PHASE 3A RESULT
+- Commit: 8ec6002
+- MCP SDK: mcp==1.28.0
+- FastMCP stdio server implemented
+- Start command:
+  python -m paios_lite.tools.mcp_server
+- Five existing local tools exposed:
+  - read_project_context
+  - get_git_log
+  - search_notes
+  - create_plan
+  - render_actions
+- Existing tool logic remains independently callable
+- Invalid path errors are sanitized before MCP responses
+- Official MCP client validation passed
+- Automated validation:
+  - 175 tests passed
+  - 0 failures
+  - 5 upstream ADK warnings
+- Existing CLI and four-agent pipeline remain unchanged
+- Phase 3A branch has not been pushed
 
-RESUME POINT
-When development resumes:
+CURRENT TASK
+Perform a focused read-only Phase 3B retry/backoff design review.
 
-1. Verify local main and origin/main are synchronized.
-2. Confirm the working tree is clean.
-3. Create:
-   feature/phase3-mcp-security
-4. Perform a read-only Phase 3 design review.
-5. Do not implement Phase 3 until ChatGPT approves the design.
-6. Begin with the smallest approved Phase 3 unit, expected to be MCP stdio exposure of the existing local tools.
+PHASE 3B REVIEW OBJECTIVE
+Determine whether retriable LLM provider failures can be handled safely without redesigning the approved four-agent pipeline or repeating unsafe side effects.
 
-PHASE 3 OBJECTIVE
-Add MCP stdio exposure and required security hardening without redesigning the approved four-agent pipeline.
-
-PLANNED PHASE 3 SCOPE
-1. Design src/tools/mcp_server.py using stdio transport.
-2. Expose the five existing local tools through MCP.
-3. Add tested retry and exponential-backoff behavior for retriable LLM provider failures.
-4. Review current path validation and apply only required hardening.
-5. Review dependency version constraints and determine final pinning requirements.
-6. Preserve the existing CLI:
-   python -m paios_lite --context <path>
-7. Keep automated tests free of live provider and network calls.
+REVIEW QUESTIONS
+1. Identify the exact exception types that reach src/main.py.
+2. Confirm whether Google ADK or google-genai already performs retries.
+3. Determine whether retrying the full pipeline is safe and acceptable.
+4. Determine whether retry should wrap:
+   - Runner event consumption
+   - the complete _run_pipeline call
+   - model configuration
+   - an ADK plugin or callback
+5. Retry only demonstrated transient failures:
+   - HTTP 429 rate limits
+   - HTTP 500, 502, 503, and 504
+   - transient timeouts or connection failures when safely identifiable
+6. Never retry:
+   - invalid API keys
+   - permission errors
+   - invalid models
+   - malformed requests
+   - local configuration failures
+7. Define exact tests using mocks with no real waiting, provider calls, or network access.
+8. Determine whether Tenacity should become a direct dependency or whether a standard-library implementation is safer.
 
 ARCHITECTURE CONSTRAINTS
 - Preserve agent order:
@@ -78,25 +88,32 @@ ARCHITECTURE CONSTRAINTS
 - Preserve one Runner.
 - Preserve one session service.
 - Preserve one event loop owned by src/main.py.
-- Preserve the four output state keys.
-- Keep local tools usable without MCP.
-- MCP must wrap existing tool logic rather than duplicate it.
-- No secrets may be committed or displayed.
+- Preserve the existing CLI.
+- Preserve all four output state keys.
+- Do not modify individual agents for retry handling.
+- Do not retry local tool failures.
+- Automated tests must remain network-free and key-free.
+
+DEPENDENCY STATUS
+- requirements.txt currently declares mcp==1.28.0.
+- Other direct dependencies still use minimum-version constraints.
+- Tenacity is installed transitively but is not declared directly.
+- Do not import Tenacity in project code unless it is added as a direct dependency.
+- Do not use pip freeze for submission dependency management.
 
 CARRY-FORWARD ITEMS
-- src/tools/mcp_server.py does not exist.
-- Exponential backoff is not implemented.
-- requirements.txt uses minimum-version constraints rather than exact pins.
-- Existing path validation requires review before adding new logic.
-- Upstream ADK warnings are non-blocking.
-- Planner paragraph density is cosmetic and optional.
-- README.md, submission documents, demo video, and Kaggle writeup remain Phase 4 work.
+- Retry/backoff design requires focused approval.
+- Direct dependency pinning remains pending.
+- README.md and submission documents remain Phase 4 work.
+- Planner paragraph density remains cosmetic and optional.
+- Upstream ADK warnings remain non-blocking.
 
 DO NOT
-- Create the Phase 3 branch during this milestone.
-- Begin Phase 3 design or implementation.
-- Modify source code or tests.
+- Begin Phase 3B implementation before the review is approved.
+- Modify source code or tests during the review.
+- Push the Phase 3 branch before ChatGPT reviews it.
 - Modify chatGPT_Todo(20).txt.
 - Commit `.env`.
-- Display API keys or secrets.
-- Delete the Phase 2 feature branch.
+- Display secrets.
+- Redesign the agent pipeline.
+- Begin Phase 4.
