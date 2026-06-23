@@ -9,12 +9,15 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import random
 import sys
 from pathlib import Path
 
+import httpx
 from google.adk.agents import SequentialAgent
 from google.adk.runners import Runner
 from google.adk.sessions import InMemorySessionService
+from google.genai import errors as genai_errors
 from google.genai import types as genai_types
 from rich.console import Console
 from rich.markdown import Markdown
@@ -36,10 +39,28 @@ _AGENT_LABELS: dict[str, str] = {
     "executor_agent": "Executor Agent",
 }
 
+_RETRIABLE_HTTP_CODES = frozenset({408, 429, 500, 502, 503, 504})
+_MAX_PIPELINE_ATTEMPTS = 3
+_INITIAL_RETRY_DELAY = 2.0
+_MAX_RETRY_DELAY = 30.0
+
 console = Console()
 
 
-async def _run_pipeline(context_path: str) -> dict[str, str]:
+def _is_retriable(exc: Exception) -> bool:
+    """Return True only for transient provider errors safe to retry."""
+    if isinstance(exc, genai_errors.APIError):
+        return exc.code in _RETRIABLE_HTTP_CODES
+    if isinstance(exc, (httpx.TimeoutException, httpx.ConnectError)):
+        return True
+    return False
+
+
+async def _run_pipeline(
+    context_path: str,
+    *,
+    seen_authors: set[str] | None = None,
+) -> dict[str, str]:
     """Build and execute the four-agent pipeline; return all four state values."""
     pipeline = SequentialAgent(
         name="paios_lite_pipeline",
@@ -65,7 +86,7 @@ async def _run_pipeline(context_path: str) -> dict[str, str]:
         role="user",
         parts=[genai_types.Part(text=_TRIGGER_MESSAGE)],
     )
-    seen_authors: set[str] = set()
+    progress_authors = seen_authors if seen_authors is not None else set()
     async for event in runner.run_async(
         user_id=_USER_ID,
         session_id=session.id,
@@ -76,11 +97,11 @@ async def _run_pipeline(context_path: str) -> dict[str, str]:
         if (
             author
             and author in _AGENT_LABELS
-            and author not in seen_authors
+            and author not in progress_authors
             and callable(checker)
             and checker()
         ):
-            seen_authors.add(author)
+            progress_authors.add(author)
             console.print(f"[green]✓[/green] {_AGENT_LABELS[author]} complete")
     final_session = await session_service.get_session(
         app_name=_APP_NAME,
@@ -105,6 +126,45 @@ async def _run_pipeline(context_path: str) -> dict[str, str]:
             "next_actions", "(Executor Agent produced no output.)"
         ),
     }
+
+
+async def _run_pipeline_with_retry(
+    context_path: str,
+    *,
+    sleep_func=None,
+    jitter_func=None,
+) -> dict[str, str]:
+    """Run the pipeline with exponential-backoff retry on transient provider errors."""
+    if sleep_func is None:
+        sleep_func = asyncio.sleep
+    if jitter_func is None:
+        jitter_func = random.uniform
+
+    seen_authors: set[str] = set()
+
+    for attempt in range(1, _MAX_PIPELINE_ATTEMPTS + 1):
+        try:
+            return await _run_pipeline(context_path, seen_authors=seen_authors)
+        except Exception as exc:
+            if not _is_retriable(exc):
+                raise
+            if attempt == _MAX_PIPELINE_ATTEMPTS:
+                raise
+            delay = min(
+                _INITIAL_RETRY_DELAY * (2 ** (attempt - 1)) + jitter_func(0.0, 1.0),
+                _MAX_RETRY_DELAY,
+            )
+            label = (
+                f"HTTP {exc.code}"
+                if isinstance(exc, genai_errors.APIError)
+                else type(exc).__name__
+            )
+            console.print(
+                f"[yellow]Transient provider failure ({label}), "
+                f"attempt {attempt}/{_MAX_PIPELINE_ATTEMPTS}; "
+                f"retrying in {delay:.1f}s.[/yellow]"
+            )
+            await sleep_func(delay)
 
 
 def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -139,7 +199,16 @@ def main(argv: list[str] | None = None) -> None:
         console.print(f"\n[red]Configuration error:[/red] {exc}")
         sys.exit(1)
 
-    results = asyncio.run(_run_pipeline(context_path))
+    try:
+        results = asyncio.run(_run_pipeline_with_retry(context_path))
+    except (genai_errors.APIError, httpx.TimeoutException, httpx.ConnectError) as exc:
+        label = (
+            f"HTTP {exc.code}"
+            if isinstance(exc, genai_errors.APIError)
+            else type(exc).__name__
+        )
+        console.print(f"\n[red]Provider error:[/red] {label}")
+        sys.exit(1)
 
     console.print()
     header = Text(justify="center")

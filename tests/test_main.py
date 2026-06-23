@@ -1,4 +1,4 @@
-"""Tests for src/main.py — _run_pipeline() orchestration.
+"""Tests for src/main.py — _run_pipeline() orchestration and retry logic.
 
 All tests make zero API or network calls and do not instantiate
 real provider-backed agents.
@@ -9,7 +9,9 @@ from __future__ import annotations
 import asyncio
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import httpx
 import pytest
+from google.genai import errors as genai_errors
 
 
 _CONTEXT_PATH = "/fake/project/path"
@@ -540,7 +542,7 @@ def main_output():
     """
     mock_console = MagicMock()
 
-    async def _fake_pipeline(path: str) -> dict:
+    async def _fake_pipeline(path: str, *, seen_authors=None) -> dict:
         return dict(_CANNED_STATE)
 
     with (
@@ -597,3 +599,405 @@ def test_main_section_titles_in_correct_order(main_output):
     assert positions == sorted(positions), (
         f"Section titles not in expected order. Positions: {positions}, titles: {rule_titles}"
     )
+
+
+# ===========================================================================
+# Phase 3B — Retry/Backoff Tests
+# ===========================================================================
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+
+def _api_err(code: int) -> genai_errors.APIError:
+    """Construct a real APIError with the given HTTP status code."""
+    return genai_errors.APIError(code, {})
+
+
+def _client_err(code: int) -> genai_errors.ClientError:
+    return genai_errors.ClientError(code, {})
+
+
+def _server_err(code: int) -> genai_errors.ServerError:
+    return genai_errors.ServerError(code, {})
+
+
+def _run_retry(pipeline_side_effect, *, jitter: float = 0.0):
+    """
+    Exercise _run_pipeline_with_retry with a mocked _run_pipeline.
+
+    Returns (result, sleep_delays, call_count) on success, or propagates the
+    raised exception so the caller can use pytest.raises.
+    """
+    sleep_delays: list[float] = []
+
+    async def _no_sleep(delay: float) -> None:
+        sleep_delays.append(delay)
+
+    pipeline_mock = AsyncMock(side_effect=pipeline_side_effect)
+
+    from src.main import _run_pipeline_with_retry
+
+    with patch("src.main._run_pipeline", pipeline_mock):
+        result = asyncio.run(
+            _run_pipeline_with_retry(
+                _CONTEXT_PATH,
+                sleep_func=_no_sleep,
+                jitter_func=lambda _a, _b: jitter,
+            )
+        )
+
+    return result, sleep_delays, pipeline_mock
+
+
+# ---------------------------------------------------------------------------
+# _is_retriable unit tests
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("code", [408, 429, 500, 502, 503, 504])
+def test_is_retriable_returns_true_for_retriable_code(code):
+    """_is_retriable() returns True for each retriable HTTP status code."""
+    from src.main import _is_retriable
+    assert _is_retriable(_api_err(code)) is True
+
+
+@pytest.mark.parametrize("code", [400, 401, 403, 404])
+def test_is_retriable_returns_false_for_non_retriable_code(code):
+    """_is_retriable() returns False for non-retriable HTTP codes."""
+    from src.main import _is_retriable
+    assert _is_retriable(_api_err(code)) is False
+
+
+def test_is_retriable_timeout_exception_is_retriable():
+    """httpx.TimeoutException is retriable."""
+    from src.main import _is_retriable
+    assert _is_retriable(httpx.TimeoutException("timeout")) is True
+
+
+def test_is_retriable_connect_error_is_retriable():
+    """httpx.ConnectError is retriable."""
+    from src.main import _is_retriable
+    assert _is_retriable(httpx.ConnectError("refused")) is True
+
+
+def test_is_retriable_value_error_is_not_retriable():
+    """ValueError is not retriable."""
+    from src.main import _is_retriable
+    assert _is_retriable(ValueError("bad value")) is False
+
+
+def test_is_retriable_environment_error_is_not_retriable():
+    """EnvironmentError is not retriable."""
+    from src.main import _is_retriable
+    assert _is_retriable(EnvironmentError("missing key")) is False
+
+
+def test_is_retriable_runtime_error_is_not_retriable():
+    """Unknown RuntimeError is not retriable."""
+    from src.main import _is_retriable
+    assert _is_retriable(RuntimeError("unexpected")) is False
+
+
+# ---------------------------------------------------------------------------
+# _run_pipeline_with_retry behavioral tests
+# ---------------------------------------------------------------------------
+
+
+def test_retry_first_attempt_success_no_sleep():
+    """First-attempt success: _run_pipeline called once, no sleep."""
+    result, sleep_delays, mock = _run_retry([dict(_CANNED_STATE)])
+    assert mock.call_count == 1
+    assert sleep_delays == []
+    assert result == dict(_CANNED_STATE)
+
+
+def test_retry_429_then_success_two_attempts():
+    """HTTP 429 on attempt 1, success on attempt 2: two calls, one sleep."""
+    result, sleep_delays, mock = _run_retry(
+        [_client_err(429), dict(_CANNED_STATE)],
+    )
+    assert mock.call_count == 2
+    assert len(sleep_delays) == 1
+    assert result == dict(_CANNED_STATE)
+
+
+def test_retry_503_then_success_two_attempts():
+    """HTTP 503 on attempt 1, success on attempt 2: two calls, one sleep."""
+    result, sleep_delays, mock = _run_retry(
+        [_server_err(503), dict(_CANNED_STATE)],
+    )
+    assert mock.call_count == 2
+    assert len(sleep_delays) == 1
+
+
+def test_retry_two_failures_then_success_three_attempts():
+    """Two transient failures then success: three calls, two sleeps."""
+    result, sleep_delays, mock = _run_retry(
+        [_server_err(503), _server_err(502), dict(_CANNED_STATE)],
+    )
+    assert mock.call_count == 3
+    assert len(sleep_delays) == 2
+    assert result == dict(_CANNED_STATE)
+
+
+def test_retry_delay_follows_exponential_base():
+    """Delays follow 2s and 4s exponential bases (with zero jitter)."""
+    _run_retry(
+        [_server_err(503), _server_err(502), dict(_CANNED_STATE)],
+        jitter=0.0,
+    )
+    # Re-run inside test to capture delays
+    sleep_delays: list[float] = []
+
+    async def _no_sleep(d: float) -> None:
+        sleep_delays.append(d)
+
+    from src.main import _run_pipeline_with_retry
+
+    pipeline_mock = AsyncMock(
+        side_effect=[_server_err(503), _server_err(502), dict(_CANNED_STATE)]
+    )
+    with patch("src.main._run_pipeline", pipeline_mock):
+        asyncio.run(
+            _run_pipeline_with_retry(
+                _CONTEXT_PATH,
+                sleep_func=_no_sleep,
+                jitter_func=lambda _a, _b: 0.0,
+            )
+        )
+
+    assert len(sleep_delays) == 2
+    assert sleep_delays[0] == pytest.approx(2.0)
+    assert sleep_delays[1] == pytest.approx(4.0)
+
+
+def test_retry_exhaustion_raises_original_exception():
+    """Retry exhaustion (3 failures): three calls, two sleeps, original exception re-raised."""
+    exc_instance = _server_err(503)
+
+    sleep_delays: list[float] = []
+
+    async def _no_sleep(d: float) -> None:
+        sleep_delays.append(d)
+
+    from src.main import _run_pipeline_with_retry
+
+    pipeline_mock = AsyncMock(side_effect=[exc_instance, _server_err(503), exc_instance])
+
+    with patch("src.main._run_pipeline", pipeline_mock):
+        with pytest.raises(genai_errors.ServerError):
+            asyncio.run(
+                _run_pipeline_with_retry(
+                    _CONTEXT_PATH,
+                    sleep_func=_no_sleep,
+                    jitter_func=lambda _a, _b: 0.0,
+                )
+            )
+
+    assert pipeline_mock.call_count == 3
+    assert len(sleep_delays) == 2
+
+
+@pytest.mark.parametrize("code", [400, 401, 403, 404])
+def test_retry_non_retriable_code_not_retried(code):
+    """Non-retriable HTTP codes: called exactly once, no sleep."""
+    sleep_delays: list[float] = []
+
+    async def _no_sleep(d: float) -> None:
+        sleep_delays.append(d)
+
+    from src.main import _run_pipeline_with_retry
+
+    pipeline_mock = AsyncMock(side_effect=[_client_err(code)])
+
+    with patch("src.main._run_pipeline", pipeline_mock):
+        with pytest.raises(genai_errors.ClientError):
+            asyncio.run(
+                _run_pipeline_with_retry(
+                    _CONTEXT_PATH,
+                    sleep_func=_no_sleep,
+                    jitter_func=lambda _a, _b: 0.0,
+                )
+            )
+
+    assert pipeline_mock.call_count == 1
+    assert sleep_delays == []
+
+
+def test_retry_timeout_then_success():
+    """httpx.TimeoutException on attempt 1, success on attempt 2."""
+    result, sleep_delays, mock = _run_retry(
+        [httpx.TimeoutException("timeout"), dict(_CANNED_STATE)],
+    )
+    assert mock.call_count == 2
+    assert len(sleep_delays) == 1
+    assert result == dict(_CANNED_STATE)
+
+
+def test_retry_connect_error_then_success():
+    """httpx.ConnectError on attempt 1, success on attempt 2."""
+    result, sleep_delays, mock = _run_retry(
+        [httpx.ConnectError("refused"), dict(_CANNED_STATE)],
+    )
+    assert mock.call_count == 2
+    assert len(sleep_delays) == 1
+
+
+# ---------------------------------------------------------------------------
+# Duplicate completion prevention via shared seen_authors
+# ---------------------------------------------------------------------------
+
+
+def test_seen_authors_shared_across_retry_attempts():
+    """The same seen_authors set is passed to all retry attempts, preventing duplicate lines."""
+    authors_per_attempt: list[set] = []
+
+    async def _tracking_pipeline(path: str, *, seen_authors=None) -> dict:
+        authors_per_attempt.append(seen_authors)
+        if len(authors_per_attempt) == 1:
+            # Simulate Memory Agent completing during the failed attempt
+            seen_authors.add("memory_agent")
+            raise genai_errors.ServerError(503, {})
+        return dict(_CANNED_STATE)
+
+    sleep_delays: list[float] = []
+
+    async def _no_sleep(d: float) -> None:
+        sleep_delays.append(d)
+
+    from src.main import _run_pipeline_with_retry
+
+    with patch("src.main._run_pipeline", side_effect=_tracking_pipeline):
+        result = asyncio.run(
+            _run_pipeline_with_retry(
+                _CONTEXT_PATH,
+                sleep_func=_no_sleep,
+                jitter_func=lambda _a, _b: 0.0,
+            )
+        )
+
+    assert len(authors_per_attempt) == 2
+    # Same set object passed to both attempts
+    assert authors_per_attempt[0] is authors_per_attempt[1]
+    # Memory Agent still present in set at the second attempt → would not be printed again
+    assert "memory_agent" in authors_per_attempt[1]
+    assert result == dict(_CANNED_STATE)
+
+
+# ---------------------------------------------------------------------------
+# main() structural: single asyncio.run() call
+# ---------------------------------------------------------------------------
+
+
+def test_main_calls_asyncio_run_exactly_once():
+    """main() must call asyncio.run() exactly once (single event loop)."""
+    run_mock = MagicMock(return_value=dict(_CANNED_STATE))
+
+    with (
+        patch("src.main.asyncio.run", run_mock),
+        patch("src.main.config.validate_config"),
+        patch("src.main.Path") as mock_path_cls,
+        patch("src.main.console", MagicMock()),
+    ):
+        mock_path_cls.return_value.exists.return_value = True
+        from src.main import main
+        main(["--context", _CONTEXT_PATH])
+
+    assert run_mock.call_count == 1
+
+
+# ---------------------------------------------------------------------------
+# main() terminal provider-error handling
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.filterwarnings("ignore::RuntimeWarning")
+def test_main_exits_1_on_provider_api_error_sanitized():
+    """Terminal APIError: exit 1 with sanitized output (HTTP code, not raw message)."""
+    exc = _server_err(503)
+    raw_message = str(exc)
+    mock_console = MagicMock()
+
+    # Use a plain MagicMock (not AsyncMock) so patch() does not auto-promote
+    # the target to a coroutine; raising synchronously keeps the except-block
+    # under test without triggering unawaited-coroutine warnings.
+    def _raise_immediately(*args, **kwargs):
+        raise exc
+
+    with (
+        patch("src.main._run_pipeline_with_retry", MagicMock(side_effect=_raise_immediately)),
+        patch("src.main.config.validate_config"),
+        patch("src.main.Path") as mock_path_cls,
+        patch("src.main.console", mock_console),
+    ):
+        mock_path_cls.return_value.exists.return_value = True
+        from src.main import main
+        with pytest.raises(SystemExit) as exc_info:
+            main(["--context", _CONTEXT_PATH])
+
+    assert exc_info.value.code == 1
+    all_output = " ".join(str(c) for c in mock_console.print.call_args_list)
+    assert "503" in all_output
+    assert raw_message not in all_output
+
+
+def test_main_exits_1_on_timeout_sanitized():
+    """Terminal TimeoutException: exit 1 with sanitized output (class name, not message)."""
+    exc = httpx.TimeoutException("internal timeout details")
+    raw_message = "internal timeout details"
+    mock_console = MagicMock()
+
+    def _raise_immediately(*args, **kwargs):
+        raise exc
+
+    with (
+        patch("src.main._run_pipeline_with_retry", MagicMock(side_effect=_raise_immediately)),
+        patch("src.main.config.validate_config"),
+        patch("src.main.Path") as mock_path_cls,
+        patch("src.main.console", mock_console),
+    ):
+        mock_path_cls.return_value.exists.return_value = True
+        from src.main import main
+        with pytest.raises(SystemExit) as exc_info:
+            main(["--context", _CONTEXT_PATH])
+
+    assert exc_info.value.code == 1
+    all_output = " ".join(str(c) for c in mock_console.print.call_args_list)
+    assert "TimeoutException" in all_output
+    assert raw_message not in all_output
+
+
+# ---------------------------------------------------------------------------
+# Compatibility: direct _run_pipeline callers remain unchanged
+# ---------------------------------------------------------------------------
+
+
+def test_run_pipeline_direct_call_without_seen_authors_compatible():
+    """_run_pipeline(context_path) without seen_authors keyword still works."""
+    mock_session = MagicMock()
+    mock_session.id = "sess-compat"
+    mock_final = MagicMock()
+    mock_final.state = dict(_CANNED_STATE)
+
+    mock_svc = MagicMock()
+    mock_svc.create_session = AsyncMock(return_value=mock_session)
+    mock_svc.get_session    = AsyncMock(return_value=mock_final)
+
+    mock_runner = MagicMock()
+    mock_runner.run_async.return_value = _empty_async_gen()
+
+    with (
+        patch("src.main.memory_agent.build_agent",   return_value=MagicMock()),
+        patch("src.main.planner_agent.build_agent",  return_value=MagicMock()),
+        patch("src.main.research_agent.build_agent", return_value=MagicMock()),
+        patch("src.main.executor_agent.build_agent", return_value=MagicMock()),
+        patch("src.main.SequentialAgent",            return_value=MagicMock()),
+        patch("src.main.InMemorySessionService",     return_value=mock_svc),
+        patch("src.main.Runner",                     return_value=mock_runner),
+    ):
+        from src.main import _run_pipeline
+        result = asyncio.run(_run_pipeline(_CONTEXT_PATH))
+
+    assert result["memory_snapshot"] == _CANNED_STATE["memory_snapshot"]
