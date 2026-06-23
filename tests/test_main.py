@@ -893,7 +893,11 @@ def test_seen_authors_shared_across_retry_attempts():
 
 def test_main_calls_asyncio_run_exactly_once():
     """main() must call asyncio.run() exactly once (single event loop)."""
-    run_mock = MagicMock(return_value=dict(_CANNED_STATE))
+    def _run_stub(coroutine):
+        coroutine.close()
+        return dict(_CANNED_STATE)
+
+    run_mock = MagicMock(side_effect=_run_stub)
 
     with (
         patch("src.main.asyncio.run", run_mock),
@@ -913,7 +917,6 @@ def test_main_calls_asyncio_run_exactly_once():
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.filterwarnings("ignore::RuntimeWarning")
 def test_main_exits_1_on_provider_api_error_sanitized():
     """Terminal APIError: exit 1 with sanitized output (HTTP code, not raw message)."""
     exc = _server_err(503)
