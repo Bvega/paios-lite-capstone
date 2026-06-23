@@ -12,6 +12,8 @@ PAIOS-Lite is a local CLI project-continuity assistant. It accepts a local
 project path, runs a four-agent Google ADK pipeline, and prints a structured
 continuity brief for the next development session.
 
+![PAIOS-Lite architecture](assets/architecture.svg)
+
 The system is intentionally local-first:
 - No web UI
 - No REST API

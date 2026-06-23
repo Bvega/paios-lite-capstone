@@ -1,0 +1,158 @@
+<svg width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
+  <title id="title">PAIOS-Lite architecture</title>
+  <desc id="desc">Architecture diagram showing the PAIOS-Lite CLI pipeline, shared session state, local tools, MCP stdio access path, and reliability and security controls.</desc>
+  <defs>
+    <style>
+      .bg { fill: #101820; }
+      .panel { fill: #16232e; stroke: #31485c; stroke-width: 2; }
+      .panel2 { fill: #122a36; stroke: #3d6072; stroke-width: 2; }
+      .node { fill: #1f3445; stroke: #6aa6c8; stroke-width: 2; }
+      .agent { fill: #203d38; stroke: #6bc6a4; stroke-width: 2; }
+      .state { fill: #2a2d48; stroke: #9ca3ff; stroke-width: 2; }
+      .tool { fill: #302b1f; stroke: #e2b86b; stroke-width: 2; }
+      .mcp { fill: #322a42; stroke: #c59cff; stroke-width: 2; }
+      .guard { fill: #2c2530; stroke: #f19a9a; stroke-width: 2; }
+      .title { fill: #f5f7fa; font: 700 36px Arial, sans-serif; }
+      .subtitle { fill: #b9c7d3; font: 20px Arial, sans-serif; }
+      .section { fill: #f5f7fa; font: 700 22px Arial, sans-serif; }
+      .label { fill: #eef4f8; font: 700 20px Arial, sans-serif; }
+      .small { fill: #d6e2ea; font: 16px Arial, sans-serif; }
+      .tiny { fill: #c8d4de; font: 14px Arial, sans-serif; }
+      .muted { fill: #9fb2c0; font: 14px Arial, sans-serif; }
+      .arrow { stroke: #88a8bb; stroke-width: 3; fill: none; marker-end: url(#arrow); }
+      .arrow-soft { stroke: #6f8796; stroke-width: 2; fill: none; marker-end: url(#arrowSoft); stroke-dasharray: 6 6; }
+      .state-line { stroke: #9ca3ff; stroke-width: 3; fill: none; marker-end: url(#arrowState); }
+      .tool-line { stroke: #d2a84f; stroke-width: 2.5; fill: none; marker-end: url(#arrowTool); }
+      .mcp-line { stroke: #c59cff; stroke-width: 3; fill: none; marker-end: url(#arrowMcp); }
+    </style>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#88a8bb"/>
+    </marker>
+    <marker id="arrowSoft" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#6f8796"/>
+    </marker>
+    <marker id="arrowState" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#9ca3ff"/>
+    </marker>
+    <marker id="arrowTool" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#d2a84f"/>
+    </marker>
+    <marker id="arrowMcp" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#c59cff"/>
+    </marker>
+  </defs>
+
+  <rect class="bg" x="0" y="0" width="1600" height="900"/>
+  <text class="title" x="70" y="62">PAIOS-Lite Architecture</text>
+  <text class="subtitle" x="70" y="96">Local CLI continuity assistant with ADK agents, shared session state, reusable local tools, and MCP stdio access</text>
+
+  <rect class="panel" x="55" y="125" width="570" height="715" rx="18"/>
+  <text class="section" x="85" y="165">Main CLI Pipeline</text>
+
+  <rect class="node" x="165" y="195" width="350" height="52" rx="12"/>
+  <text class="label" x="340" y="228" text-anchor="middle">Developer</text>
+
+  <path class="arrow" d="M340 247 L340 278"/>
+  <rect class="node" x="165" y="278" width="350" height="62" rx="12"/>
+  <text class="label" x="340" y="304" text-anchor="middle">PAIOS-Lite CLI</text>
+  <text class="tiny" x="340" y="326" text-anchor="middle">python -m paios_lite --context &lt;path&gt;</text>
+
+  <path class="arrow" d="M340 340 L340 372"/>
+  <rect class="node" x="165" y="372" width="350" height="58" rx="12"/>
+  <text class="label" x="340" y="408" text-anchor="middle">SequentialAgent</text>
+
+  <path class="arrow" d="M340 430 L340 462"/>
+  <rect class="agent" x="165" y="462" width="350" height="54" rx="12"/>
+  <text class="label" x="340" y="496" text-anchor="middle">Memory Agent</text>
+
+  <path class="arrow" d="M340 516 L340 544"/>
+  <rect class="agent" x="165" y="544" width="350" height="54" rx="12"/>
+  <text class="label" x="340" y="578" text-anchor="middle">Planner Agent</text>
+
+  <path class="arrow" d="M340 598 L340 626"/>
+  <rect class="agent" x="165" y="626" width="350" height="54" rx="12"/>
+  <text class="label" x="340" y="660" text-anchor="middle">Research Agent</text>
+
+  <path class="arrow" d="M340 680 L340 708"/>
+  <rect class="agent" x="165" y="708" width="350" height="54" rx="12"/>
+  <text class="label" x="340" y="742" text-anchor="middle">Executor Agent</text>
+
+  <path class="arrow" d="M340 762 L340 790"/>
+  <rect class="node" x="165" y="790" width="350" height="36" rx="12"/>
+  <text class="label" x="340" y="814" text-anchor="middle">Continuity Brief</text>
+
+  <rect class="panel2" x="655" y="125" width="395" height="330" rx="18"/>
+  <text class="section" x="685" y="165">Shared Session State</text>
+  <text class="small" x="685" y="195">Agents pass outputs through ADK session state.</text>
+
+  <rect class="state" x="700" y="225" width="305" height="44" rx="10"/>
+  <text class="label" x="852" y="253" text-anchor="middle">memory_snapshot</text>
+  <rect class="state" x="700" y="286" width="305" height="44" rx="10"/>
+  <text class="label" x="852" y="314" text-anchor="middle">plan</text>
+  <rect class="state" x="700" y="347" width="305" height="44" rx="10"/>
+  <text class="label" x="852" y="375" text-anchor="middle">research_notes</text>
+  <rect class="state" x="700" y="408" width="305" height="44" rx="10"/>
+  <text class="label" x="852" y="436" text-anchor="middle">next_actions</text>
+
+  <path class="state-line" d="M515 489 C590 489 600 247 696 247"/>
+  <path class="state-line" d="M515 571 C595 571 598 308 696 308"/>
+  <path class="state-line" d="M515 653 C600 653 600 369 696 369"/>
+  <path class="state-line" d="M515 735 C610 735 606 430 696 430"/>
+
+  <rect class="panel2" x="655" y="485" width="395" height="355" rx="18"/>
+  <text class="section" x="685" y="525">Existing Local Tools</text>
+  <text class="small" x="685" y="555">Pure Python, local files only, no LLM calls.</text>
+
+  <rect class="tool" x="700" y="582" width="305" height="40" rx="10"/>
+  <text class="small" x="852" y="607" text-anchor="middle">read_project_context</text>
+  <rect class="tool" x="700" y="636" width="305" height="40" rx="10"/>
+  <text class="small" x="852" y="661" text-anchor="middle">get_git_log</text>
+  <rect class="tool" x="700" y="690" width="305" height="40" rx="10"/>
+  <text class="small" x="852" y="715" text-anchor="middle">search_notes</text>
+  <rect class="tool" x="700" y="744" width="305" height="40" rx="10"/>
+  <text class="small" x="852" y="769" text-anchor="middle">create_plan</text>
+  <rect class="tool" x="700" y="798" width="305" height="40" rx="10"/>
+  <text class="small" x="852" y="823" text-anchor="middle">render_actions</text>
+
+  <path class="tool-line" d="M515 489 C630 489 615 602 696 602"/>
+  <path class="tool-line" d="M515 489 C630 489 615 656 696 656"/>
+  <path class="tool-line" d="M515 653 C610 653 616 710 696 710"/>
+  <path class="tool-line" d="M515 571 C610 571 612 764 696 764"/>
+  <path class="tool-line" d="M515 735 C610 735 614 818 696 818"/>
+
+  <rect class="panel" x="1080" y="125" width="465" height="355" rx="18"/>
+  <text class="section" x="1110" y="165">MCP Access Path</text>
+  <text class="small" x="1110" y="195">Additional stdio access to the same local tools.</text>
+
+  <rect class="mcp" x="1140" y="230" width="345" height="56" rx="12"/>
+  <text class="label" x="1312" y="265" text-anchor="middle">MCP Client</text>
+
+  <path class="mcp-line" d="M1312 286 L1312 330"/>
+  <text class="tiny" x="1348" y="313">stdio</text>
+  <rect class="mcp" x="1140" y="330" width="345" height="56" rx="12"/>
+  <text class="label" x="1312" y="365" text-anchor="middle">FastMCP Server</text>
+
+  <path class="mcp-line" d="M1312 386 L1312 430"/>
+  <rect class="tool" x="1140" y="430" width="345" height="40" rx="10"/>
+  <text class="small" x="1312" y="455" text-anchor="middle">Existing Local Tools</text>
+
+  <path class="mcp-line" d="M1140 450 C1075 450 1074 660 1006 660"/>
+  <text class="muted" x="1094" y="506">reuses implementations</text>
+  <text class="muted" x="1110" y="530">does not replace CLI pipeline</text>
+
+  <rect class="panel" x="1080" y="510" width="465" height="330" rx="18"/>
+  <text class="section" x="1110" y="550">Security and Reliability</text>
+
+  <rect class="guard" x="1115" y="580" width="395" height="225" rx="14"/>
+  <text class="small" x="1140" y="615">• sanitized MCP errors</text>
+  <text class="small" x="1140" y="650">• sanitized provider errors</text>
+  <text class="small" x="1140" y="685">• transient retry: 3 attempts</text>
+  <text class="small" x="1140" y="720">• exponential backoff: ~2s, ~4s + jitter</text>
+  <text class="small" x="1140" y="755">• environment-only credentials</text>
+  <text class="small" x="1140" y="790">• read-only project tools</text>
+
+  <path class="arrow-soft" d="M1080 610 C1010 580 1015 310 1005 310"/>
+  <path class="arrow-soft" d="M1080 690 C1016 696 1045 818 1008 818"/>
+
+  <text class="muted" x="70" y="875">PAIOS-Lite is local-first: no cloud deployment, REST API, database, web UI, or persistent storage is represented.</text>
+</svg>

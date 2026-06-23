@@ -34,6 +34,8 @@ The agents read local project context, summarize current state, plan the next wo
 
 ## Architecture Overview
 
+![PAIOS-Lite architecture](docs/assets/architecture.svg)
+
 ```mermaid
 flowchart TD
     User[User] --> CLI[CLI: python -m paios_lite --context path]
