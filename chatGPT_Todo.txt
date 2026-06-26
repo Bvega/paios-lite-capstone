@@ -1,91 +1,61 @@
 PAIOS-Lite Kaggle Capstone
-Repository: https://github.com/Bvega/paios-lite-capstone
-Local folder: /Users/miniboli/DEV/paios-lite-capstone
-Main Phase 2 checkpoint: 36f0ce5 — docs: record Phase 2 pause milestone
-Active branch: feature/phase3-mcp-security
-Final Phase 3 technical checkpoint: bae04b0 — test: prevent unawaited retry coroutine warning
-Deadline: July 6, 2026
 
-ROLE SPLIT
-- ChatGPT: orchestrator, architect, validator, and submission strategist
-- Claude in VS Code: primary coding executor
-- Codex in VS Code: approved for focused fixes, tests, validation, and documentation
-- Gemini: demonstrated runtime model and validation support
-- Antigravity: optional course tool; not required for implementation
-- Repository: source of truth
+## Project state
 
-CURRENT STATUS
-- Phase 0 — Planning baseline: COMPLETE
-- Phase 1 — Memory Agent foundation: COMPLETE
-- Phase 2 — Multi-agent Pipeline: COMPLETE
-  - Merged and pushed to main
-  - Main checkpoint: 36f0ce5
-- Phase 3 — MCP Server and Security Hardening: COMPLETE
-  - Phase 3A — MCP stdio server: COMPLETE
-  - Phase 3B — Retry and exponential backoff: COMPLETE
-  - Phase 3C — Path-validation review: COMPLETE
-  - Phase 3D — Dependency reproducibility: COMPLETE
-  - Final Phase 3 validation: PASSED
-- Phase 4 — Demo, Documentation, and Submission: NOT STARTED
+- Project: PAIOS-Lite Kaggle Capstone
+- Branch: `feature/phase4-submission-package`
+- Phase 3 merged into local and remote main at `eaa1749`
+- Phase 4A complete: `793c905`
+- Phase 4B1 complete: `00d392e`
+- Phase 4B2 complete: `535dd6c`
+- Phase 4C complete: `d85c095`
+- Phase 4D complete: `fd5c48a`
+- Phase 4E validation package prepared but not yet committed
+- Working tree expected to contain only the four approved Phase 4E documentation changes
 
-PHASE 3 COMMITS
-- 8ec6002 feat: add MCP stdio server for local tools
-- 92f811b docs: record Phase 3A MCP checkpoint
-- ae98442 feat: add transient-failure retry to pipeline entry point
-- 6f387a8 docs: record Phase 3B retry checkpoint
-- 8ff58d3 chore: pin direct dependencies for reproducibility
-- 7a69881 docs: record Phase 3D dependency checkpoint
-- bae04b0 test: prevent unawaited retry coroutine warning
+## Technical status
 
-PHASE 3 FINAL RESULT
-- FastMCP stdio server implemented
-- Five existing tools exposed through MCP
-- Invalid path errors sanitized
-- Transient provider retry implemented
-- One asyncio.run() preserved
-- Fresh pipeline state created per retry attempt
-- Duplicate progress messages prevented
-- Path validation reviewed; no source correction required
-- Seven direct dependencies exactly pinned
-- Python 3.14 validation:
-  - 207 tests passed
-  - 5 upstream warnings
-- Python 3.11 validation:
-  - 207 tests passed
-  - 5 upstream warnings
-- MCP official-client validation passed
-- Controlled live Gemini CLI validation passed
-- CLI exit code 0
-- All four agents completed exactly once
-- All four output sections present and ordered
-- No traceback
-- No secrets or credentials tracked
-- Working tree clean
-- Phase 3 branch has not yet been pushed or merged
+- Four-agent ADK pipeline complete
+- Five local tools complete
+- MCP stdio server complete
+- Retry/backoff complete
+- Security/error sanitization complete
+- Exact direct dependency pins complete
+- Final repository tests expected at 207 passing
 
-CURRENT TASK
-Record the final Phase 3 documentation milestone.
+## Completed Phase 4 assets
 
-NEXT TASK
-1. Push feature/phase3-mcp-security.
-2. Verify remote branch.
-3. Fast-forward merge Phase 3 into main.
-4. Push main.
-5. Preserve the Phase 3 feature branch.
-6. Begin Phase 4 planning only after merge verification.
+- `README.md`
+- `docs/ARCHITECTURE.md`
+- `docs/CAPSTONE_BRIEF.md`
+- `docs/KAGGLE_WRITEUP_DRAFT.md`
+- `docs/SUBMISSION_NOTES.md`
+- `docs/PHASE4_VALIDATION.md`
+- `docs/SUBMISSION_CHECKLIST.md`
+- `docs/assets/architecture.svg`
+- `docs/assets/cli-success.png`
+- `docs/assets/continuity-brief.png`
+- `docs/assets/mcp-tools-list.png`
+- `docs/assets/mcp-invalid-path.png`
+- `docs/assets/test-suite.png`
+- `demo/demo_script.md`
+- `demo/video_storyboard.md`
 
-PHASE 4 SCOPE
-- Final README
-- Architecture and usage documentation
-- Demo script
-- Video walkthrough
-- Kaggle write-up
-- Submission checklist
-- Final public-repository verification
+## Remaining ordered tasks
 
-DO NOT
-- Begin Phase 4 before Phase 3 is merged and verified.
-- Delete the Phase 3 feature branch.
-- Commit .env or secrets.
-- Create alternate or numbered TODO files.
-- Modify chatGPT_Todo(20).txt.
+1. Audit and commit Phase 4E.
+2. Push `feature/phase4-submission-package`.
+3. Verify remote feature branch.
+4. Fast-forward merge Phase 4 into `main`.
+5. Push and verify `main`.
+6. Verify GitHub README and media rendering publicly.
+7. Record and edit the demonstration video.
+8. Upload the video and record the final URL.
+9. Create the Kaggle project and media gallery.
+10. Paste and format the final write-up.
+11. Replace all pending links.
+12. Recheck current official submission rules and deadline.
+13. Perform final public-link validation.
+14. Submit and preserve confirmation.
+
+Do not mark the capstone submitted until the Kaggle confirmation is preserved.

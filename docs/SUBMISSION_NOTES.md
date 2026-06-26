@@ -7,14 +7,16 @@ Prepare the final public submission package for PAIOS-Lite, a Concierge Agents c
 ## 2. Current repository status
 
 - Active branch: `feature/phase4-submission-package`
-- Current Phase 4D baseline: `d85c095`
+- Current Phase 4E baseline: `fd5c48a`
 - Phase 4A completed: README, architecture, and capstone brief documentation.
 - Phase 4B completed: README screenshot integration and validated PNG assets.
 - Phase 4C completed: final demo script and video storyboard.
-- Phase 4D in progress: Kaggle write-up draft and submission notes.
-- No Phase 4 changes pushed yet.
+- Phase 4D completed at `fd5c48a`: Kaggle write-up draft and submission notes.
+- Phase 4E in progress: final validation report, submission checklist, submission-status refresh, and current TODO handoff.
+- Phase 4 branch has not been pushed or merged.
+- Manual submission blockers remain.
 
-This baseline will change after the Phase 4D commit.
+This baseline will change after the Phase 4E commit.
 
 ## 3. Confirmed capstone requirements
 
@@ -55,6 +57,8 @@ REQUIRES OFFICIAL RECHECK before final publication:
 - `docs/ARCHITECTURE.md`
 - `docs/CAPSTONE_BRIEF.md`
 - `docs/KAGGLE_WRITEUP_DRAFT.md`
+- `docs/PHASE4_VALIDATION.md`
+- `docs/SUBMISSION_CHECKLIST.md`
 - `demo/demo_script.md`
 - `demo/video_storyboard.md`
 
