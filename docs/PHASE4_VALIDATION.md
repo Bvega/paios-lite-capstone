@@ -160,17 +160,10 @@ Direct dependencies remain exactly pinned in `requirements.txt`.
 
 ## 11. Public-repository hygiene
 
-`chatGPT_Todo(20).txt` was inspected read-only.
-
-Assessment:
-
-- Harmless historical documentation: partially.
-- Obsolete internal workflow material: yes.
-- Public-repository hygiene risk: yes.
-- Possible secret or private-data risk: no likely secret or private personal
-  information was observed.
-
-The file was not modified or deleted, per Phase 4E constraints.
+Historical TODO copy cleanup: the obsolete numbered TODO copy inspected during
+Phase 4E contained no unique information requiring preservation and no likely
+secret or private-data finding. It was removed after review to reduce repository
+noise.
 
 ## 12. Capstone concept coverage
 
