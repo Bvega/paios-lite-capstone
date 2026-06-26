@@ -7,12 +7,21 @@
 - [x] Phase 4B2 committed: `535dd6c`
 - [x] Phase 4C committed: `d85c095`
 - [x] Phase 4D committed: `fd5c48a`
-- [ ] Commit Phase 4E
-- [ ] Push `feature/phase4-submission-package`
-- [ ] Verify remote feature branch
-- [ ] Fast-forward merge Phase 4 into `main`
-- [ ] Push `main`
-- [ ] Verify public `main` branch HEAD
+- [x] Phase 4E committed: `409fb35`
+- [x] Push `feature/phase4-submission-package`
+- [x] Verify remote feature branch
+- [x] Fast-forward merge Phase 4 into `main`
+- [x] Push `main`
+- [x] Verify local and remote `main` branch HEAD at `409fb35`
+- [x] Obsolete numbered TODO removed: `c3fa0ce`
+- [x] Cleanup branch pushed
+- [x] Cleanup merged into `main`
+- [x] Cleanup published and publicly verified
+- [x] Verify local and remote `main` branch HEAD at `c3fa0ce`
+- [ ] Commit final submission-status update
+- [ ] Push `docs/final-submission-status`
+- [ ] Fast-forward merge status update into `main`
+- [ ] Push and verify `main` after status update
 
 ## 2. Technical validation
 
@@ -39,7 +48,7 @@
 - [x] Submission notes updated
 - [x] Phase 4 validation report prepared
 - [x] Submission checklist prepared
-- [ ] Verify GitHub README rendering publicly
+- [x] Verify GitHub README rendering publicly
 
 ## 4. Media assets
 
@@ -50,7 +59,8 @@
 - [x] MCP invalid-path screenshot exists
 - [x] Test-suite screenshot exists
 - [x] README image references resolve locally
-- [ ] Verify media rendering publicly on GitHub
+- [x] Verify architecture SVG rendering publicly on GitHub
+- [x] Verify screenshots rendering publicly on GitHub
 
 ## 5. Demo video
 
@@ -87,9 +97,9 @@
 
 ## 9. Links and public access
 
-- [ ] Verify public repository link
-- [ ] Verify public README rendering
-- [ ] Verify public media rendering
+- [x] Verify public repository link
+- [x] Verify public README rendering
+- [x] Verify public media rendering
 - [ ] Verify video link
 - [ ] Verify Kaggle project URL
 - [ ] Replace all `PENDING` link placeholders
@@ -122,11 +132,11 @@
 
 | Field | Value |
 |---|---|
-| Repository commit | PENDING |
-| Main-branch commit | PENDING |
+| Repository commit | `c3fa0ce` |
+| Main-branch commit | `c3fa0ce` |
 | YouTube URL | PENDING |
 | Kaggle project URL | PENDING |
 | Submission timestamp | PENDING |
 | Confirmation reference | PENDING |
 | Final reviewer | PENDING |
-| Status | PENDING |
+| Status | REPOSITORY READY — MANUAL SUBMISSION WORK PENDING |

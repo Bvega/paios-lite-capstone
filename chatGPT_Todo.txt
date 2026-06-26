@@ -1,61 +1,87 @@
 PAIOS-Lite Kaggle Capstone
 
-## Project state
+## 1. Project state
 
 - Project: PAIOS-Lite Kaggle Capstone
-- Branch: `feature/phase4-submission-package`
-- Phase 3 merged into local and remote main at `eaa1749`
-- Phase 4A complete: `793c905`
-- Phase 4B1 complete: `00d392e`
-- Phase 4B2 complete: `535dd6c`
-- Phase 4C complete: `d85c095`
-- Phase 4D complete: `fd5c48a`
-- Phase 4E validation package prepared but not yet committed
-- Working tree expected to contain only the four approved Phase 4E documentation changes
+- Current working branch: `docs/final-submission-status`
+- Branch base: `c3fa0ce`
+- Remote and local `main`: `c3fa0ce`
+- Phase 4 repository work: complete
+- Public repository verification: passed
+- Obsolete numbered TODO cleanup: complete
+- Capstone submission: not yet complete
 
-## Technical status
+## 2. Technical status
 
-- Four-agent ADK pipeline complete
+- Four-agent Google ADK pipeline complete
 - Five local tools complete
 - MCP stdio server complete
-- Retry/backoff complete
-- Security/error sanitization complete
+- Retry and backoff complete
+- Security and error sanitization complete
 - Exact direct dependency pins complete
-- Final repository tests expected at 207 passing
+- Final repository tests validated at 207 passing tests
+- Repository package technically complete
+- Manual submission work remains
 
-## Completed Phase 4 assets
+## 3. Completed repository package
 
-- `README.md`
-- `docs/ARCHITECTURE.md`
-- `docs/CAPSTONE_BRIEF.md`
-- `docs/KAGGLE_WRITEUP_DRAFT.md`
-- `docs/SUBMISSION_NOTES.md`
-- `docs/PHASE4_VALIDATION.md`
-- `docs/SUBMISSION_CHECKLIST.md`
-- `docs/assets/architecture.svg`
-- `docs/assets/cli-success.png`
-- `docs/assets/continuity-brief.png`
-- `docs/assets/mcp-tools-list.png`
-- `docs/assets/mcp-invalid-path.png`
-- `docs/assets/test-suite.png`
-- `demo/demo_script.md`
-- `demo/video_storyboard.md`
+- Four-agent Google ADK pipeline
+- Five local tools
+- MCP stdio server
+- Retry and backoff
+- Security and error sanitization
+- Exact direct dependency pins
+- 207 passing tests
+- Final README
+- Architecture documentation
+- Architecture SVG
+- Five public screenshots
+- Demo script
+- Video storyboard
+- Kaggle write-up draft
+- Submission notes
+- Submission checklist
+- Phase 4 validation report
+- Public GitHub rendering verification
 
-## Remaining ordered tasks
+## 4. Current branch context
 
-1. Audit and commit Phase 4E.
-2. Push `feature/phase4-submission-package`.
-3. Verify remote feature branch.
-4. Fast-forward merge Phase 4 into `main`.
-5. Push and verify `main`.
-6. Verify GitHub README and media rendering publicly.
-7. Record and edit the demonstration video.
-8. Upload the video and record the final URL.
-9. Create the Kaggle project and media gallery.
-10. Paste and format the final write-up.
-11. Replace all pending links.
-12. Recheck current official submission rules and deadline.
-13. Perform final public-link validation.
-14. Submit and preserve confirmation.
+- Phase 4 feature branch was committed through `409fb35`.
+- `feature/phase4-submission-package` was pushed.
+- Phase 4 was fast-forward merged into `main`.
+- `main` was pushed and verified at `409fb35`.
+- Public GitHub rendering was checked successfully.
+- README, architecture SVG, Mermaid diagrams, and screenshots rendered correctly.
+- Obsolete `chatGPT_Todo(20).txt` was removed in cleanup commit `c3fa0ce`.
+- Cleanup branch was pushed.
+- Cleanup was fast-forward merged into `main`.
+- `main` was pushed and verified at `c3fa0ce`.
+- Public GitHub verification confirmed that `chatGPT_Todo(20).txt` no longer appears.
+- The repository package is technically complete.
+- The capstone is not yet submitted.
+- The next operational task is recording and editing the demonstration video.
+
+## 5. Remaining ordered tasks
+
+1. Commit this final submission-status update.
+2. Push `docs/final-submission-status`.
+3. Fast-forward merge the status update into `main`.
+4. Push and verify `main`.
+5. Record the demonstration video using `demo/demo_script.md`.
+6. Edit the video to 4:50 or less.
+7. Export the video as 1920 × 1080, 30 fps, H.264 MP4.
+8. Upload the video to YouTube.
+9. Confirm the required visibility against the current official rules.
+10. Record the final YouTube URL.
+11. Create or select the Kaggle cover image/media-gallery item.
+12. Create the Kaggle project page.
+13. Paste and format `docs/KAGGLE_WRITEUP_DRAFT.md`.
+14. Add the final repository and video links.
+15. Recheck the official deadline, timezone, media rules, and submission fields.
+16. Validate all public links without authentication.
+17. Submit the Kaggle project.
+18. Preserve the submission confirmation, timestamp, and final URLs.
+
+## 6. Submission warning
 
 Do not mark the capstone submitted until the Kaggle confirmation is preserved.

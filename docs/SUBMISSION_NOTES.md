@@ -6,17 +6,22 @@ Prepare the final public submission package for PAIOS-Lite, a Concierge Agents c
 
 ## 2. Current repository status
 
-- Active branch: `feature/phase4-submission-package`
-- Current Phase 4E baseline: `fd5c48a`
+- Active branch: `docs/final-submission-status`
+- Branch base: `c3fa0ce`
 - Phase 4A completed: README, architecture, and capstone brief documentation.
-- Phase 4B completed: README screenshot integration and validated PNG assets.
+- Phase 4B completed: architecture diagram, README screenshot integration, and validated PNG assets.
 - Phase 4C completed: final demo script and video storyboard.
-- Phase 4D completed at `fd5c48a`: Kaggle write-up draft and submission notes.
-- Phase 4E in progress: final validation report, submission checklist, submission-status refresh, and current TODO handoff.
-- Phase 4 branch has not been pushed or merged.
+- Phase 4D completed: Kaggle write-up draft and submission notes.
+- Phase 4E completed: final validation report, submission checklist, submission-status refresh, and current TODO handoff.
+- Phase 4 feature branch was committed through `409fb35`, pushed, and fast-forward merged into `main`; `main` was pushed and verified at `409fb35`.
+- Cleanup commit `c3fa0ce` removed the obsolete numbered TODO copy.
+- Cleanup branch was pushed and fast-forward merged into `main`; `main` was pushed and verified locally and remotely at `c3fa0ce`.
+- Public GitHub rendering was verified successfully for the README, architecture SVG, Mermaid diagrams, and screenshots.
+- Public GitHub verification confirmed that the obsolete numbered TODO copy no longer appears.
+- Repository package is technically ready.
+- Next operational task: record the demonstration video using `demo/demo_script.md`.
+- Capstone submission is not complete.
 - Manual submission blockers remain.
-
-This baseline will change after the Phase 4E commit.
 
 ## 3. Confirmed capstone requirements
 
@@ -73,6 +78,10 @@ REQUIRES OFFICIAL RECHECK before final publication:
 
 ## 7. Remaining manual work
 
+- Commit this final submission-status update.
+- Push `docs/final-submission-status`.
+- Fast-forward merge the status update into `main`.
+- Push and verify `main`.
 - Record demonstration video.
 - Edit video to 4:50 or less.
 - Export H.264 MP4 at 1920 × 1080, 30 fps.
@@ -82,8 +91,8 @@ REQUIRES OFFICIAL RECHECK before final publication:
 - Create Kaggle project page.
 - Paste and format final write-up.
 - Add repository and video links.
-- Verify public repository rendering.
 - Verify submission deadline and rules against the official page.
+- Validate all public links without authentication.
 - Submit before deadline.
 - Preserve submission confirmation.
 
@@ -112,13 +121,17 @@ REQUIRES OFFICIAL RECHECK before final publication:
 ## 10. Public-repository checks
 
 - Repository URL renders publicly.
+- README renders publicly.
 - README images render correctly.
-- Architecture diagram is visible.
+- Architecture SVG renders publicly.
+- Mermaid diagrams render correctly.
+- Screenshots render publicly.
 - Setup instructions are clear.
 - `.env` is not tracked.
 - `.env.example` contains placeholders only.
 - No credentials or private tokens are present.
 - Demo and submission docs do not expose private local workflow details.
+- Obsolete numbered TODO copy no longer appears publicly.
 
 ## 11. Final validation commands
 
@@ -167,19 +180,21 @@ Submission confirmation: PENDING
 
 The project is not submission-ready while these remain unresolved:
 
+- Final submission-status update not yet committed, pushed, merged, and verified.
 - Video not yet recorded or uploaded.
 - Kaggle project not yet created.
 - Final cover-image decision pending.
-- Phase 4 branch not yet pushed or merged.
-- Final validation not yet completed.
+- Final repository and video URLs not yet added to Kaggle.
 - Final official rules recheck not yet completed.
+- Final public-link validation not yet completed.
+- Submission confirmation not yet preserved.
 
 ## 14. Final sign-off record
 
 | Item | Status | Notes |
 |---|---|---|
-| Repository public and current | PENDING | Verify after final push or merge. |
-| Final tests pass | PENDING | Run immediately before submission. |
+| Repository public and current | READY | Local and remote `main` verified at `c3fa0ce`; final status update remains to publish. |
+| Final tests pass | READY | Phase 4 validation recorded 207 passing tests; re-run immediately before submission if required. |
 | Write-up under 2,500 words | PENDING | Recheck after final edits. |
 | Video uploaded and public | PENDING | Add final URL. |
 | Kaggle page submitted | PENDING | Preserve confirmation. |
