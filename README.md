@@ -140,6 +140,10 @@ Run the demo fixture:
 python -m paios_lite --context examples/sample_project_context.md
 ```
 
+### Successful agent run
+
+![PAIOS-Lite CLI successful agent run](docs/assets/cli-success.png)
+
 You can also pass a local project directory or supported context file:
 
 ```bash
@@ -161,6 +165,16 @@ The MCP server exposes the same five local tools used by the agents:
 - `search_notes`
 - `create_plan`
 - `render_actions`
+
+### MCP tool discovery
+
+![PAIOS-Lite MCP tools list](docs/assets/mcp-tools-list.png)
+
+### Sanitized MCP error handling
+
+![PAIOS-Lite sanitized MCP invalid path error](docs/assets/mcp-invalid-path.png)
+
+The invalid-path example shows that the tool call is marked as an error, the public message is sanitized, and private sentinel path details are not echoed back to the caller.
 
 Because MCP uses stdio transport, it opens no web port and requires no deployment.
 
@@ -209,6 +223,12 @@ Phase 3 validation recorded:
 - official MCP client validation passed
 - controlled live Gemini CLI validation passed
 
+### Test-suite evidence
+
+![PAIOS-Lite test suite passing](docs/assets/test-suite.png)
+
+The captured validation output records the network-free suite with 207 passing tests.
+
 ## Demo Fixture
 
 The repository includes:
@@ -218,6 +238,12 @@ examples/sample_project_context.md
 ```
 
 This fixture provides a stable context file for demos, screenshots, and video recording.
+
+### Generated continuity brief
+
+![PAIOS-Lite continuity brief output](docs/assets/continuity-brief.png)
+
+The generated brief shows the demo fixture rendered as the same four-section continuity output used by the CLI workflow.
 
 ## Current Project Status
 
