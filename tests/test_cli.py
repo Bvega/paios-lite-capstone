@@ -23,9 +23,10 @@ _SAMPLE_FILE = str(_REPO_ROOT / "examples" / "sample_project_context.md")
 def _run(*args: str, extra_env: dict[str, str] | None = None) -> subprocess.CompletedProcess:
     """Run paios_lite as a subprocess with a sanitized environment."""
     env = dict(os.environ)
-    # Remove all provider keys so no real API call can succeed
-    for key in ("GOOGLE_API_KEY", "ANTHROPIC_API_KEY", "OPENAI_API_KEY"):
-        env.pop(key, None)
+    # Keep provider keys explicitly empty so load_dotenv() cannot refill them.
+    env["GOOGLE_API_KEY"] = ""
+    env["ANTHROPIC_API_KEY"] = ""
+    env["OPENAI_API_KEY"] = ""
     if extra_env:
         env.update(extra_env)
     return subprocess.run(
